@@ -14,7 +14,7 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
       - name: Run go test
-        run: go test ./*.go -cover
+        run: go test -cover
 
   gofmt:
     runs-on: ubuntu-latest
