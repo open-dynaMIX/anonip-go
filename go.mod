@@ -1,4 +1,4 @@
-module main
+module github.com/open-dynaMIX/anonip-go
 
 go 1.15
 
