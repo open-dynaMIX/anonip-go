@@ -2,6 +2,8 @@ package main
 
 import (
 	"errors"
+	"fmt"
+	"io"
 	"os"
 	"strings"
 )
@@ -9,6 +11,11 @@ import "bufio"
 import "log"
 import "net"
 import "github.com/alexflint/go-arg"
+
+// to enable monkey-patching during tests
+var osExit = os.Exit
+var logWriter = os.Stdout
+var logReader = os.Stdin
 
 func maskIP(ip net.IP, args Args) net.IP {
 	if ip := ip.To4(); ip != nil {
@@ -72,6 +79,10 @@ func getIPStrings(line string, columns []uint) []string {
 	return ipList
 }
 
+func printLog(w io.Writer, line []byte) {
+	w.Write(line)
+}
+
 func handleLine(line string, args Args) string {
 	ipStrings := getIPStrings(line, args.Columns)
 	for _, ipString := range ipStrings {
@@ -85,7 +96,7 @@ func handleLine(line string, args Args) string {
 		}
 		line = strings.ReplaceAll(line, ipString, maskedIp.String())
 	}
-	os.Stdout.Write([]byte(line + "\n"))
+	printLog(logWriter, []byte(line+"\n"))
 	return line
 }
 
@@ -119,7 +130,7 @@ func parseArgs() (Args, *arg.Parser, error) {
 }
 
 func run(args Args) {
-	scanner := bufio.NewScanner(os.Stdin)
+	scanner := bufio.NewScanner(logReader)
 	for scanner.Scan() {
 		go handleLine(scanner.Text(), args)
 	}
@@ -131,7 +142,9 @@ func run(args Args) {
 func main() {
 	args, p, err := parseArgs()
 	if err != nil {
-		p.Fail(err.Error())
+		p.WriteUsage(os.Stderr)
+		fmt.Println("error:", err)
+		osExit(-1)
 	}
 	run(args)
 }
