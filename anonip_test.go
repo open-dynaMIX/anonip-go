@@ -168,12 +168,19 @@ func TestHandleLine(t *testing.T) {
 			V4Mask:   12,
 			V6Mask:   84,
 		},
+		{
+			Input:    "",
+			Expected: "",
+			V4Mask:   12,
+			V6Mask:   84,
+		},
 	}
 
 	for _, tCase := range testMap {
+		channel := make(chan string)
 		args := Args{IpV4Mask: tCase.V4Mask, IpV6Mask: tCase.V6Mask, Columns: []uint{0}}
-		maskedLine := handleLine(tCase.Input, args)
-		if maskedLine != tCase.Expected {
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
 		}
 	}
@@ -198,9 +205,10 @@ func TestIncrement(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
+		channel := make(chan string)
 		args := Args{Increment: tCase.Increment, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}}
-		maskedLine := handleLine(tCase.Input, args)
-		if maskedLine != tCase.Expected {
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
 		}
 	}
@@ -240,9 +248,10 @@ func TestColumns(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
+		channel := make(chan string)
 		args := Args{Columns: tCase.Columns, IpV4Mask: 12, IpV6Mask: 84}
-		maskedLine := handleLine(tCase.Input, args)
-		if maskedLine != tCase.Expected {
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
 		}
 	}
