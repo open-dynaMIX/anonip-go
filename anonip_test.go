@@ -178,7 +178,7 @@ func TestHandleLine(t *testing.T) {
 
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{IpV4Mask: tCase.V4Mask, IpV6Mask: tCase.V6Mask, Columns: []uint{0}}
+		args := Args{IpV4Mask: tCase.V4Mask, IpV6Mask: tCase.V6Mask, Columns: []uint{0}, Delimiter: " "}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -206,7 +206,7 @@ func TestIncrement(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Increment: tCase.Increment, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}}
+		args := Args{Increment: tCase.Increment, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, Delimiter: " "}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -249,7 +249,7 @@ func TestColumns(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Columns: tCase.Columns, IpV4Mask: 12, IpV6Mask: 84}
+		args := Args{Columns: tCase.Columns, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " "}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -463,6 +463,34 @@ func TestRunFail(t *testing.T) {
 
 	if got != 1 {
 		t.Errorf("Expected exit code: 1, got: %d", got)
+	}
+}
+
+func TestDelimiter(t *testing.T) {
+	type TestCase struct {
+		Input     string
+		Delimiter string
+		Expected  string
+	}
+	testMap := []TestCase{
+		{
+			Input:     "192.168.100.200;some;string;with;öéäü",
+			Delimiter: ";",
+			Expected:  "192.168.96.0;some;string;with;öéäü",
+		},
+		{
+			Input:     "192.168.100.200 some string with öéäü",
+			Delimiter: ";",
+			Expected:  "192.168.100.200 some string with öéäü",
+		},
+	}
+	for _, tCase := range testMap {
+		channel := make(chan string)
+		args := Args{Delimiter: tCase.Delimiter, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84}
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
+			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+		}
 	}
 }
 

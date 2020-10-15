@@ -66,8 +66,8 @@ func getIP(ipString string) (string, net.IP) {
 	return ipString, ip
 }
 
-func getIPStrings(line string, columns []uint) []string {
-	logList := strings.Split(line, " ")
+func getIPStrings(line string, columns []uint, delimiter string) []string {
+	logList := strings.Split(line, delimiter)
 	ipList := []string{}
 	for _, column := range columns {
 		if int(column) > len(logList)-1 {
@@ -87,7 +87,7 @@ func handleLine(line string, args Args, channel chan string) {
 		channel <- line
 		return
 	}
-	ipStrings := getIPStrings(line, args.Columns)
+	ipStrings := getIPStrings(line, args.Columns, args.Delimiter)
 	for _, ipString := range ipStrings {
 		ipString, ip := getIP(ipString)
 		if ip == nil {
@@ -107,6 +107,7 @@ type Args struct {
 	IpV6Mask  int    `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
 	Increment uint   `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
 	Columns   []uint `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
+	Delimiter string `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
