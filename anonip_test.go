@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"log"
 	"os"
 	"reflect"
 	"testing"
+	"testing/iotest"
 )
 
 func TestHandleLine(t *testing.T) {
@@ -413,5 +415,32 @@ func TestMainFail(t *testing.T) {
 		if got != -1 {
 			t.Errorf("Expected exit code: -1, got: %d", got)
 		}
+	}
+}
+
+func TestRunFaul(t *testing.T) {
+	// patched exit function
+	var got int
+	testOsExit := func(code int) {
+		got = code
+	}
+
+	// create a copy of the old value
+	oldOsExit := osExit
+
+	// restore previous state after the test
+	defer func() { osExit = oldOsExit }()
+
+	// reassign osExit
+	osExit = testOsExit
+
+	logReader = iotest.TimeoutReader(bytes.NewReader([]byte("test")))
+
+	args := Args{Increment: 0, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}}
+
+	run(args)
+
+	if got != 1 {
+		t.Errorf("Expected exit code: 1, got: %d", got)
 	}
 }

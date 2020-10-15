@@ -15,7 +15,7 @@ import "github.com/alexflint/go-arg"
 // to enable monkey-patching during tests
 var osExit = os.Exit
 var logWriter = os.Stdout
-var logReader = os.Stdin
+var logReader io.Reader = os.Stdin
 
 func maskIP(ip net.IP, args Args) net.IP {
 	if ip := ip.To4(); ip != nil {
@@ -136,6 +136,7 @@ func run(args Args) {
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
+		osExit(1)
 	}
 }
 
