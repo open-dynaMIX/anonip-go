@@ -9,3 +9,24 @@
 [Anonip](https://github.com/DigitaleGesellschaft/Anonip) rewritten in go.
 
 This is WIP and mainly serves an educational purpose at this time.
+
+## Usage
+
+```
+Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING]
+
+Options:
+  --ipv4mask INTEGER, -4 INTEGER
+                         truncate the last n bits [default: 12]
+  --ipv6mask INTEGER, -6 INTEGER
+                         truncate the last n bits [default: 84]
+  --increment INTEGER, -i INTEGER
+                         increment the IP address by n [default: 0]
+  --columns INTEGER [INTEGER ...], -c INTEGER [INTEGER ...]
+                         assume IP address is in column n (1-based indexed) [default: 0]
+  --delimiter STRING, -l STRING
+                         log delimiter [default:  ]
+  --replace STRING, -r STRING
+                         replacement string in case address parsing fails (Example: 0.0.0.0)
+  --help, -h             display this help and exit
+```
