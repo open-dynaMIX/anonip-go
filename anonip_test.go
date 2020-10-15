@@ -285,11 +285,13 @@ func TestArgsColumns(t *testing.T) {
 			Success:  false,
 		},
 	}
+
+	defer func() { os.Args = []string{"anonip"} }()
+
 	for _, tCase := range testMap {
 		os.Args = []string{"anonip"}
 		if tCase.Input[0] != "" {
 			os.Args = append(os.Args, tCase.Input...)
-			defer func() { os.Args = []string{"anonip"} }()
 		}
 		args, _, err := parseArgs()
 		if err != nil && tCase.Success {
@@ -324,11 +326,13 @@ func TestArgsIPMasks(t *testing.T) {
 			Success: false,
 		},
 	}
+
+	defer func() { os.Args = []string{"anonip"} }()
+
 	for _, tCase := range testMap {
 		os.Args = []string{"anonip"}
 		if tCase.Input[0] != "" {
 			os.Args = append(os.Args, tCase.Input...)
-			defer func() { os.Args = []string{"anonip"} }()
 		}
 		_, _, err := parseArgs()
 		if err == nil && !tCase.Success {
@@ -354,27 +358,31 @@ func TestMainSuccess(t *testing.T) {
 			Expected: "2001:db8:85a0::\n",
 		},
 	}
+
+	defer func() { os.Args = []string{"anonip"} }()
+	os.Args = []string{"anonip"}
+
+	// create a copy of the old stdin and stdout
+	oldStdin := os.Stdin
+	oldStdout := os.Stdout
+
+	// Create pipes for monkey patching stdin and stdout
+	stdoutPipeRead, stdoutPipeWrite, _ := os.Pipe()
+	stdinPipeRead, stdinPipeWrite, _ := os.Pipe()
+
+	// reassign stdin and stdout
+	logReader = stdinPipeRead
+	logWriter = stdoutPipeWrite
+
+	// make sure to clean up afterwards
+	defer func() { logReader = oldStdin }()
+	defer func() { logWriter = oldStdout }()
+
 	for _, tCase := range testMap {
-		// create a copy of the old stdin and stdout
-		oldStdin := os.Stdin
-		oldStdout := os.Stdout
-
-		// Create pipes for monkey patching stdin and stdout
-		stdoutPipeRead, stdoutPipeWrite, _ := os.Pipe()
-		stdinPipeRead, stdinPipeWrite, _ := os.Pipe()
-
 		// Write input to stdin pipe
 		if _, err := stdinPipeWrite.Write(tCase.Input); err != nil {
 			log.Fatal(err)
 		}
-
-		// reassign stdin and stdout
-		logReader = stdinPipeRead
-		logWriter = stdoutPipeWrite
-
-		// make sure to clean up afterwards
-		defer func() { logReader = oldStdin }()
-		defer func() { logWriter = oldStdout }()
 
 		go func() {
 			main()
@@ -389,7 +397,7 @@ func TestMainSuccess(t *testing.T) {
 		output := string(buf[:n])
 
 		if output != tCase.Expected {
-			t.Errorf("Wanted: %v, Got: %v", tCase.Expected, string(output))
+			t.Errorf("Wanted: %v, Got: %v", tCase.Expected, output)
 		}
 	}
 }
@@ -400,22 +408,25 @@ func TestMainFail(t *testing.T) {
 		{"-4", "33"},
 		{"-6", "-1"},
 	}
+
+	defer func() { os.Args = []string{"anonip"} }()
+
+	// patched exit function
+	var got int
+	testOsExit := func(code int) {
+		got = code
+	}
+
+	// create a copy of the old value
+	oldOsExit := osExit
+
+	// restore previous state after the test
+	defer func() { osExit = oldOsExit }()
+
+	// reassign osExit
+	osExit = testOsExit
+
 	for _, tCase := range testMap {
-		// patched exit function
-		var got int
-		testOsExit := func(code int) {
-			got = code
-		}
-
-		// create a copy of the old value
-		oldOsExit := osExit
-
-		// restore previous state after the test
-		defer func() { osExit = oldOsExit }()
-
-		// reassign osExit
-		osExit = testOsExit
-
 		// setup args
 		os.Args = append([]string{"anonip"}, tCase...)
 
