@@ -71,7 +71,6 @@ func getIPStrings(line string, columns []uint) []string {
 	ipList := []string{}
 	for _, column := range columns {
 		if int(column) > len(logList)-1 {
-			// uncovered
 			continue
 		}
 		ipList = append(ipList, logList[column])
