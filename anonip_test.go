@@ -418,7 +418,7 @@ func TestMainFail(t *testing.T) {
 	}
 }
 
-func TestRunFaul(t *testing.T) {
+func TestRunFail(t *testing.T) {
 	// patched exit function
 	var got int
 	testOsExit := func(code int) {
