@@ -494,6 +494,35 @@ func TestDelimiter(t *testing.T) {
 	}
 }
 
+func TestReplace(t *testing.T) {
+	type TestCase struct {
+		Input    string
+		Replace  *string
+		Expected string
+	}
+	replaceString := "replaceIt"
+	testMap := []TestCase{
+		{
+			Input:    "some string without IP",
+			Replace:  nil,
+			Expected: "some string without IP",
+		},
+		{
+			Input:    "some string without IP",
+			Replace:  &replaceString,
+			Expected: "replaceIt string without IP",
+		},
+	}
+	for _, tCase := range testMap {
+		channel := make(chan string)
+		args := Args{Replace: tCase.Replace, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " "}
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
+			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+		}
+	}
+}
+
 func TestMain(m *testing.M) {
 	rc := m.Run()
 

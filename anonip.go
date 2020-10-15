@@ -47,7 +47,7 @@ func _handlePort(ipString string) (string, net.IP) {
 		if len(parts) > 1 {
 			return parts[0], net.ParseIP(parts[0])
 		}
-		return "", nil
+		return ipString, nil
 	}
 
 	return strippedIpString, net.ParseIP(strippedIpString)
@@ -91,6 +91,9 @@ func handleLine(line string, args Args, channel chan string) {
 	for _, ipString := range ipStrings {
 		ipString, ip := getIP(ipString)
 		if ip == nil {
+			if args.Replace != nil {
+				line = strings.Replace(line, ipString, *args.Replace, 1)
+			}
 			continue
 		}
 		maskedIp := maskIP(ip, args)
@@ -103,11 +106,12 @@ func handleLine(line string, args Args, channel chan string) {
 }
 
 type Args struct {
-	IpV4Mask  int    `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
-	IpV6Mask  int    `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
-	Increment uint   `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
-	Columns   []uint `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
-	Delimiter string `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
+	IpV4Mask  int     `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IpV6Mask  int     `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
+	Increment uint    `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
+	Columns   []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
+	Delimiter string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
+	Replace   *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
