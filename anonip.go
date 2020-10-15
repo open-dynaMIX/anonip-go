@@ -71,7 +71,6 @@ func getIPStrings(line string, columns []uint) []string {
 	ipList := []string{}
 	for _, column := range columns {
 		if int(column) > len(logList)-1 {
-			// uncovered
 			continue
 		}
 		ipList = append(ipList, logList[column])
@@ -79,11 +78,15 @@ func getIPStrings(line string, columns []uint) []string {
 	return ipList
 }
 
-func printLog(w io.Writer, line []byte) {
-	w.Write(line)
+func printLog(w io.Writer, line string) {
+	w.Write([]byte(line + "\n"))
 }
 
-func handleLine(line string, args Args) string {
+func handleLine(line string, args Args, channel chan string) {
+	if line == "" {
+		channel <- line
+		return
+	}
 	ipStrings := getIPStrings(line, args.Columns)
 	for _, ipString := range ipStrings {
 		ipString, ip := getIP(ipString)
@@ -96,8 +99,7 @@ func handleLine(line string, args Args) string {
 		}
 		line = strings.ReplaceAll(line, ipString, maskedIp.String())
 	}
-	printLog(logWriter, []byte(line+"\n"))
-	return line
+	channel <- line
 }
 
 type Args struct {
@@ -130,9 +132,11 @@ func parseArgs() (Args, *arg.Parser, error) {
 }
 
 func run(args Args) {
+	channel := make(chan string)
 	scanner := bufio.NewScanner(logReader)
 	for scanner.Scan() {
-		go handleLine(scanner.Text(), args)
+		go handleLine(scanner.Text(), args, channel)
+		printLog(logWriter, <-channel)
 	}
 	if err := scanner.Err(); err != nil {
 		log.Println(err)
