@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"strings"
@@ -144,7 +143,7 @@ func run(args Args) {
 		printLog(logWriter, <-channel)
 	}
 	if err := scanner.Err(); err != nil {
-		log.Println(err)
+		log.Println("error:", err)
 		osExit(1)
 	}
 }
@@ -153,7 +152,7 @@ func main() {
 	args, p, err := parseArgs()
 	if err != nil {
 		p.WriteUsage(os.Stderr)
-		fmt.Println("error:", err)
+		log.Println("error:", err)
 		osExit(-1)
 	}
 	run(args)
