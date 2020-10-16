@@ -3,12 +3,28 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
 	"testing"
 	"testing/iotest"
 )
+
+func TestMain(m *testing.M) {
+	rc := m.Run()
+
+	// rc 0 means we've passed,
+	// and CoverMode will be non empty if run with -cover
+	if rc == 0 && testing.CoverMode() != "" {
+		c := testing.Coverage()
+		if c < 1.0 { // enforce 100% coverage
+			fmt.Println("Tests passed but coverage failed at", c)
+			rc = -1
+		}
+	}
+	os.Exit(rc)
+}
 
 func TestHandleLine(t *testing.T) {
 	type TestCase struct {
@@ -384,9 +400,7 @@ func TestMainSuccess(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		go func() {
-			main()
-		}()
+		go main()
 
 		// read the output from the stdout pipe
 		buf := make([]byte, 1024)
@@ -407,9 +421,13 @@ func TestMainFail(t *testing.T) {
 		{"-c", "0"},
 		{"-4", "33"},
 		{"-6", "-1"},
+		{"-o"},
 	}
 
-	defer func() { os.Args = []string{"anonip"} }()
+	tempDir, err := ioutil.TempDir("", "tempLog")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// patched exit function
 	var got int
@@ -420,14 +438,24 @@ func TestMainFail(t *testing.T) {
 	// create a copy of the old value
 	oldOsExit := osExit
 
-	// restore previous state after the test
-	defer func() { osExit = oldOsExit }()
-
 	// reassign osExit
 	osExit = testOsExit
 
+	// restore previous state after the test
+	defer func() {
+		os.Args = []string{"anonip"}
+		osExit = oldOsExit
+		err := os.Remove(tempDir)
+		if err != nil {
+			log.Fatal("error:", err)
+		}
+	}()
+
 	for _, tCase := range testMap {
 		// setup args
+		if len(tCase) == 1 {
+			tCase = append(tCase, tempDir)
+		}
 		os.Args = append([]string{"anonip"}, tCase...)
 
 		main()
@@ -521,20 +549,4 @@ func TestReplace(t *testing.T) {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
 		}
 	}
-}
-
-func TestMain(m *testing.M) {
-	rc := m.Run()
-
-	// rc 0 means we've passed,
-	// and CoverMode will be non empty if run with -cover
-	if rc == 0 && testing.CoverMode() != "" {
-		c := testing.Coverage()
-		if c < 1.0 { // enforce 100% coverage
-			fmt.Println("Tests passed but coverage failed at", c)
-			rc = -1
-		}
-	}
-	os.Exit(rc)
-
 }
