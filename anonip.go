@@ -111,11 +111,22 @@ type Args struct {
 	Columns   []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
 	Delimiter string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
 	Replace   *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
+	Output    string  `arg:"-o,--output" placeholder:"STRING" help:"file to write to"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
 	var args Args
 	p := arg.MustParse(&args)
+	args.Output = strings.Trim(args.Output, " ")
+	if args.Output != "" {
+		file, err := os.OpenFile(args.Output, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+		if err != nil {
+			log.Println("error:", err)
+			osExit(-1)
+		}
+		logWriter = file
+	}
+
 	if args.IpV4Mask < 1 || args.IpV4Mask > 32 {
 		return args, p, errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32!")
 	}

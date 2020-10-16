@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"reflect"
@@ -405,9 +406,13 @@ func TestMainFail(t *testing.T) {
 		{"-c", "0"},
 		{"-4", "33"},
 		{"-6", "-1"},
+		{"-o"},
 	}
 
-	defer func() { os.Args = []string{"anonip"} }()
+	tempDir, err := ioutil.TempDir("", "tempLog")
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// patched exit function
 	var got int
@@ -418,14 +423,24 @@ func TestMainFail(t *testing.T) {
 	// create a copy of the old value
 	oldOsExit := osExit
 
-	// restore previous state after the test
-	defer func() { osExit = oldOsExit }()
-
 	// reassign osExit
 	osExit = testOsExit
 
+	// restore previous state after the test
+	defer func() {
+		os.Args = []string{"anonip"}
+		osExit = oldOsExit
+		err := os.Remove(tempDir)
+		if err != nil {
+			log.Fatal("error:", err)
+		}
+	}()
+
 	for _, tCase := range testMap {
 		// setup args
+		if len(tCase) == 1 {
+			tCase = append(tCase, tempDir)
+		}
 		os.Args = append([]string{"anonip"}, tCase...)
 
 		main()
