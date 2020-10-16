@@ -384,9 +384,7 @@ func TestMainSuccess(t *testing.T) {
 			log.Fatal(err)
 		}
 
-		go func() {
-			main()
-		}()
+		go main()
 
 		// read the output from the stdout pipe
 		buf := make([]byte, 1024)
