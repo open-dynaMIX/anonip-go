@@ -26,6 +26,14 @@ func TestMain(m *testing.M) {
 	os.Exit(rc)
 }
 
+func GetDefaultArgs() Args {
+	oldOsArgs := os.Args
+	defer func() { os.Args = oldOsArgs }()
+	os.Args = []string{"anonip"}
+	args, _, _ := parseArgs()
+	return args
+}
+
 func TestHandleLine(t *testing.T) {
 	type TestCase struct {
 		Input    string
@@ -194,7 +202,8 @@ func TestHandleLine(t *testing.T) {
 
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{IpV4Mask: tCase.V4Mask, IpV6Mask: tCase.V6Mask, Columns: []uint{0}, Delimiter: " ", SkipPrivate: false}
+		args := GetDefaultArgs()
+		args.IpV4Mask, args.IpV6Mask = tCase.V4Mask, tCase.V6Mask
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -222,7 +231,8 @@ func TestIncrement(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Increment: tCase.Increment, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, Delimiter: " ", SkipPrivate: false}
+		args := GetDefaultArgs()
+		args.Increment = tCase.Increment
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -265,7 +275,8 @@ func TestColumns(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Columns: tCase.Columns, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " ", SkipPrivate: false}
+		args := GetDefaultArgs()
+		args.Columns = tCase.Columns
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -500,7 +511,7 @@ func TestRunFail(t *testing.T) {
 
 	logReader = iotest.TimeoutReader(bytes.NewReader([]byte("test")))
 
-	args := Args{Increment: 0, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, SkipPrivate: false}
+	args := GetDefaultArgs()
 
 	run(args)
 
@@ -529,7 +540,8 @@ func TestDelimiter(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Delimiter: tCase.Delimiter, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, SkipPrivate: false}
+		args := GetDefaultArgs()
+		args.Delimiter = tCase.Delimiter
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -558,7 +570,8 @@ func TestReplace(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Replace: tCase.Replace, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " ", SkipPrivate: false}
+		args := GetDefaultArgs()
+		args.Replace = tCase.Replace
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -587,7 +600,8 @@ func TestSkipPrivate(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{SkipPrivate: true, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " "}
+		args := GetDefaultArgs()
+		args.SkipPrivate = true
 		initPrivateIPBlocks()
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
@@ -623,7 +637,8 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 		"no valid CIDR",
 	}
 
-	args := Args{Increment: 0, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, SkipPrivate: true}
+	args := GetDefaultArgs()
+	args.SkipPrivate = true
 
 	run(args)
 
