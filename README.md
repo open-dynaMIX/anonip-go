@@ -13,7 +13,7 @@ This is WIP and mainly serves an educational purpose at this time.
 ## Usage
 
 ```
-Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING] [--output FILE] [--input FILE]
+Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--output FILE] [--input FILE] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING] [--skip-private]
 
 Options:
   --ipv4mask INTEGER, -4 INTEGER
@@ -22,14 +22,16 @@ Options:
                          truncate the last n bits [default: 84]
   --increment INTEGER, -i INTEGER
                          increment the IP address by n [default: 0]
+  --output FILE, -o FILE
+                         file or FIFO to write to [default: stdout]
+  --input FILE           file or FIFO to read from [default: stdin]
   --columns INTEGER [INTEGER ...], -c INTEGER [INTEGER ...]
                          assume IP address is in column n (1-based indexed) [default: 0]
   --delimiter STRING, -l STRING
                          log delimiter [default:  ]
   --replace STRING, -r STRING
                          replacement string in case address parsing fails (Example: 0.0.0.0)
-  --output FILE, -o FILE
-                         file or FIFO to write to [default: stdout]
-  --input FILE           file or FIFO to read from [default: stdin]
+  --skip-private, -p     do not mask addresses in private ranges. See IANA Special-Purpose Address Registry [default: false]
   --help, -h             display this help and exit
+
 ```
