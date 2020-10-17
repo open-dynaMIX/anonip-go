@@ -194,7 +194,7 @@ func TestHandleLine(t *testing.T) {
 
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{IpV4Mask: tCase.V4Mask, IpV6Mask: tCase.V6Mask, Columns: []uint{0}, Delimiter: " "}
+		args := Args{IpV4Mask: tCase.V4Mask, IpV6Mask: tCase.V6Mask, Columns: []uint{0}, Delimiter: " ", SkipPrivate: false}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -222,7 +222,7 @@ func TestIncrement(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Increment: tCase.Increment, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, Delimiter: " "}
+		args := Args{Increment: tCase.Increment, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, Delimiter: " ", SkipPrivate: false}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -265,7 +265,7 @@ func TestColumns(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Columns: tCase.Columns, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " "}
+		args := Args{Columns: tCase.Columns, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " ", SkipPrivate: false}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -486,7 +486,7 @@ func TestRunFail(t *testing.T) {
 
 	logReader = iotest.TimeoutReader(bytes.NewReader([]byte("test")))
 
-	args := Args{Increment: 0, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}}
+	args := Args{Increment: 0, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, SkipPrivate: false}
 
 	run(args)
 
@@ -515,7 +515,7 @@ func TestDelimiter(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Delimiter: tCase.Delimiter, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84}
+		args := Args{Delimiter: tCase.Delimiter, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, SkipPrivate: false}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
@@ -544,10 +544,69 @@ func TestReplace(t *testing.T) {
 	}
 	for _, tCase := range testMap {
 		channel := make(chan string)
-		args := Args{Replace: tCase.Replace, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " "}
+		args := Args{Replace: tCase.Replace, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " ", SkipPrivate: false}
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
 		}
+	}
+}
+
+func TestSkipPrivate(t *testing.T) {
+	type TestCase struct {
+		Input    string
+		Expected string
+	}
+	testMap := []TestCase{
+		{
+			Input:    "10.0.0.1",
+			Expected: "10.0.0.1",
+		},
+		{
+			Input:    "3.3.3.3",
+			Expected: "3.3.0.0",
+		},
+		{
+			Input:    "169.254.0.1",
+			Expected: "169.254.0.1",
+		},
+	}
+	for _, tCase := range testMap {
+		channel := make(chan string)
+		args := Args{SkipPrivate: true, Columns: []uint{0}, IpV4Mask: 12, IpV6Mask: 84, Delimiter: " "}
+		initPrivateIPBlocks()
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
+			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+		}
+	}
+}
+
+func TestFailInitPrivateIPBlocks(t *testing.T) {
+	// patched exit function
+	var got int
+	testOsExit := func(code int) {
+		got = code
+	}
+
+	// create a copy of the old value
+	oldOsExit := osExit
+
+	// restore previous state after the test
+	defer func() { osExit = oldOsExit }()
+
+	// reassign osExit
+	osExit = testOsExit
+
+	privateIPBlocksStrings = []string{
+		"no valid CIDR",
+	}
+
+	args := Args{Increment: 0, IpV4Mask: 12, IpV6Mask: 84, Columns: []uint{0}, SkipPrivate: true}
+
+	run(args)
+
+	if got != 2 {
+		t.Errorf("Expected exit code: 2, got: %d", got)
 	}
 }
