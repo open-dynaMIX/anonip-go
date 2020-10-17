@@ -422,6 +422,7 @@ func TestMainFail(t *testing.T) {
 		{"-4", "33"},
 		{"-6", "-1"},
 		{"-o"},
+		{"--input"},
 	}
 
 	tempDir, err := ioutil.TempDir("", "tempLog")
@@ -461,8 +462,8 @@ func TestMainFail(t *testing.T) {
 		main()
 
 		// Check if exit code has been called
-		if got != -1 {
-			t.Errorf("Expected exit code: -1, got: %d", got)
+		if got != 1 {
+			t.Errorf("Expected exit code: 1, got: %d", got)
 		}
 	}
 }
