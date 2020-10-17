@@ -111,20 +111,34 @@ type Args struct {
 	Columns   []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
 	Delimiter string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
 	Replace   *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
-	Output    string  `arg:"-o,--output" placeholder:"STRING" help:"file to write to"`
+	Output    string  `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
+	Input     string  `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
+}
+
+// Wrapper around os.OpenFile for better control in tests
+func OpenFile(name string, flag int, perm os.FileMode) *os.File {
+	f, err := os.OpenFile(name, flag, perm)
+	if err != nil {
+		log.Println("error:", err)
+		osExit(1)
+	}
+	return f
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
 	var args Args
 	p := arg.MustParse(&args)
+
 	args.Output = strings.Trim(args.Output, " ")
 	if args.Output != "" {
-		file, err := os.OpenFile(args.Output, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
-		if err != nil {
-			log.Println("error:", err)
-			osExit(-1)
-		}
+		file := OpenFile(args.Output, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
 		logWriter = file
+	}
+
+	args.Input = strings.Trim(args.Input, " ")
+	if args.Input != "" {
+		file := OpenFile(args.Input, os.O_RDONLY, 0)
+		logReader = file
 	}
 
 	if args.IpV4Mask < 1 || args.IpV4Mask > 32 {
@@ -164,7 +178,7 @@ func main() {
 	if err != nil {
 		p.WriteUsage(os.Stderr)
 		log.Println("error:", err)
-		osExit(-1)
+		osExit(1)
 	}
 	run(args)
 }
