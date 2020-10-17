@@ -13,7 +13,7 @@ This is WIP and mainly serves an educational purpose at this time.
 ## Usage
 
 ```
-Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING]
+Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING] [--output FILE] [--input FILE]
 
 Options:
   --ipv4mask INTEGER, -4 INTEGER
@@ -28,5 +28,8 @@ Options:
                          log delimiter [default:  ]
   --replace STRING, -r STRING
                          replacement string in case address parsing fails (Example: 0.0.0.0)
+  --output FILE, -o FILE
+                         file or FIFO to write to [default: stdout]
+  --input FILE           file or FIFO to read from [default: stdin]
   --help, -h             display this help and exit
 ```
