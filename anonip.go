@@ -31,6 +31,7 @@ func OpenFile(name string, flag int, perm os.FileMode) *os.File {
 	if err != nil {
 		logError(err)
 		osExit(1)
+		return nil // just in case osExit was monkey-patched
 	}
 	return f
 }
@@ -43,6 +44,7 @@ func initPrivateIPBlocks() {
 		if err != nil {
 			logError(err)
 			osExit(2)
+			return // just in case osExit was monkey-patched
 		}
 		privateIPBlocks = append(privateIPBlocks, block)
 	}
@@ -218,6 +220,7 @@ func run(args Args) {
 	if err := scanner.Err(); err != nil {
 		logError(err)
 		osExit(1)
+		return // just in case osExit was monkey-patched
 	}
 }
 
@@ -227,6 +230,7 @@ func main() {
 		p.WriteUsage(os.Stderr)
 		logError(err)
 		osExit(1)
+		return // just in case osExit was monkey-patched
 	}
 	run(args)
 }
