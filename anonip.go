@@ -115,14 +115,14 @@ func handleLine(line string, args Args, channel chan string) {
 }
 
 type Args struct {
-	IpV4Mask  int     `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
-	IpV6Mask  int     `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
-	Increment uint    `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
-	Columns   []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
-	Delimiter string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
-	Replace   *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
-	Output    string  `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
-	Input     string  `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
+	IpV4Mask    int     `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IpV6Mask    int     `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
+	Increment   uint    `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
+	Output      string  `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
+	Input       string  `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
+	Columns     []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
+	Delimiter   string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
+	Replace     *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
