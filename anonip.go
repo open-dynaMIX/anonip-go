@@ -16,6 +16,16 @@ var osExit = os.Exit
 var logWriter = os.Stdout
 var logReader io.Reader = os.Stdin
 
+// Wrapper around os.OpenFile for better control in tests
+func OpenFile(name string, flag int, perm os.FileMode) *os.File {
+	f, err := os.OpenFile(name, flag, perm)
+	if err != nil {
+		log.Println("error:", err)
+		osExit(1)
+	}
+	return f
+}
+
 func maskIP(ip net.IP, args Args) net.IP {
 	if ip := ip.To4(); ip != nil {
 		mask := net.CIDRMask(32-args.IpV4Mask, 32)
@@ -113,16 +123,6 @@ type Args struct {
 	Replace   *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
 	Output    string  `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
 	Input     string  `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
-}
-
-// Wrapper around os.OpenFile for better control in tests
-func OpenFile(name string, flag int, perm os.FileMode) *os.File {
-	f, err := os.OpenFile(name, flag, perm)
-	if err != nil {
-		log.Println("error:", err)
-		osExit(1)
-	}
-	return f
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
