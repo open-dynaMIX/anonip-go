@@ -375,7 +375,6 @@ func TestMainSuccess(t *testing.T) {
 		},
 	}
 
-	defer func() { os.Args = []string{"anonip"} }()
 	os.Args = []string{"anonip"}
 
 	// create a copy of the old stdin and stdout
@@ -391,8 +390,11 @@ func TestMainSuccess(t *testing.T) {
 	logWriter = stdoutPipeWrite
 
 	// make sure to clean up afterwards
-	defer func() { logReader = oldStdin }()
-	defer func() { logWriter = oldStdout }()
+	defer func() {
+		os.Args = []string{"anonip"}
+		logReader = oldStdin
+		logWriter = oldStdout
+	}()
 
 	for _, tCase := range testMap {
 		// Write input to stdin pipe
