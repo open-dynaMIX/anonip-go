@@ -15,6 +15,16 @@ import "github.com/alexflint/go-arg"
 var osExit = os.Exit
 var logWriter = os.Stdout
 var logReader io.Reader = os.Stdin
+var privateIPBlocksStrings = []string{
+	"127.0.0.0/8",    // IPv4 loopback
+	"10.0.0.0/8",     // RFC1918
+	"172.16.0.0/12",  // RFC1918
+	"192.168.0.0/16", // RFC1918
+	"169.254.0.0/16", // RFC3927 link-local
+	"::1/128",        // IPv6 loopback
+	"fe80::/10",      // IPv6 link-local
+	"fc00::/7",       // IPv6 unique local addr
+}
 
 // Wrapper around os.OpenFile for better control in tests
 func OpenFile(name string, flag int, perm os.FileMode) *os.File {
@@ -24,6 +34,32 @@ func OpenFile(name string, flag int, perm os.FileMode) *os.File {
 		osExit(1)
 	}
 	return f
+}
+
+var privateIPBlocks []*net.IPNet
+
+func initPrivateIPBlocks() {
+	for _, cidr := range privateIPBlocksStrings {
+		_, block, err := net.ParseCIDR(cidr)
+		if err != nil {
+			log.Println("error:", err)
+			osExit(2)
+		}
+		privateIPBlocks = append(privateIPBlocks, block)
+	}
+}
+
+func isPrivateIP(ip net.IP) bool {
+	if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
+		return true
+	}
+
+	for _, block := range privateIPBlocks {
+		if block.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 func maskIP(ip net.IP, args Args) net.IP {
@@ -105,6 +141,11 @@ func handleLine(line string, args Args, channel chan string) {
 			}
 			continue
 		}
+		if args.SkipPrivate {
+			if isPrivateIP(ip) {
+				continue
+			}
+		}
 		maskedIp := maskIP(ip, args)
 		if args.Increment > 0 {
 			incrementIP(maskedIp, args.Increment)
@@ -123,6 +164,7 @@ type Args struct {
 	Columns     []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
 	Delimiter   string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
 	Replace     *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
+	SkipPrivate bool    `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
@@ -161,6 +203,9 @@ func parseArgs() (Args, *arg.Parser, error) {
 }
 
 func run(args Args) {
+	if args.SkipPrivate {
+		initPrivateIPBlocks()
+	}
 	channel := make(chan string)
 	scanner := bufio.NewScanner(logReader)
 	for scanner.Scan() {
