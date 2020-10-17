@@ -7,7 +7,6 @@ import (
 	"strings"
 )
 import "bufio"
-import "log"
 import "net"
 import "github.com/alexflint/go-arg"
 
@@ -30,7 +29,7 @@ var privateIPBlocksStrings = []string{
 func OpenFile(name string, flag int, perm os.FileMode) *os.File {
 	f, err := os.OpenFile(name, flag, perm)
 	if err != nil {
-		log.Println("error:", err)
+		logError(err)
 		osExit(1)
 	}
 	return f
@@ -42,7 +41,7 @@ func initPrivateIPBlocks() {
 	for _, cidr := range privateIPBlocksStrings {
 		_, block, err := net.ParseCIDR(cidr)
 		if err != nil {
-			log.Println("error:", err)
+			logError(err)
 			osExit(2)
 		}
 		privateIPBlocks = append(privateIPBlocks, block)
@@ -125,6 +124,10 @@ func getIPStrings(line string, columns []uint, delimiter string) []string {
 
 func printLog(w io.Writer, line string) {
 	w.Write([]byte(line + "\n"))
+}
+
+func logError(err error) {
+	os.Stderr.WriteString("error:" + err.Error())
 }
 
 func handleLine(line string, args Args, channel chan string) {
@@ -213,7 +216,7 @@ func run(args Args) {
 		printLog(logWriter, <-channel)
 	}
 	if err := scanner.Err(); err != nil {
-		log.Println("error:", err)
+		logError(err)
 		osExit(1)
 	}
 }
@@ -222,7 +225,7 @@ func main() {
 	args, p, err := parseArgs()
 	if err != nil {
 		p.WriteUsage(os.Stderr)
-		log.Println("error:", err)
+		logError(err)
 		osExit(1)
 	}
 	run(args)

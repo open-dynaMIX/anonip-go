@@ -375,7 +375,6 @@ func TestMainSuccess(t *testing.T) {
 		},
 	}
 
-	defer func() { os.Args = []string{"anonip"} }()
 	os.Args = []string{"anonip"}
 
 	// create a copy of the old stdin and stdout
@@ -391,8 +390,11 @@ func TestMainSuccess(t *testing.T) {
 	logWriter = stdoutPipeWrite
 
 	// make sure to clean up afterwards
-	defer func() { logReader = oldStdin }()
-	defer func() { logWriter = oldStdout }()
+	defer func() {
+		os.Args = []string{"anonip"}
+		logReader = oldStdin
+		logWriter = oldStdout
+	}()
 
 	for _, tCase := range testMap {
 		// Write input to stdin pipe
@@ -425,6 +427,10 @@ func TestMainFail(t *testing.T) {
 		{"--input"},
 	}
 
+	// ignore stderr in order to keep the log clean
+	oldStderr := os.Stderr
+	os.Stderr, _ = os.Open("/dev/null")
+
 	tempDir, err := ioutil.TempDir("", "tempLog")
 	if err != nil {
 		log.Fatal(err)
@@ -445,6 +451,7 @@ func TestMainFail(t *testing.T) {
 	// restore previous state after the test
 	defer func() {
 		os.Args = []string{"anonip"}
+		os.Stderr = oldStderr
 		osExit = oldOsExit
 		err := os.Remove(tempDir)
 		if err != nil {
@@ -478,8 +485,15 @@ func TestRunFail(t *testing.T) {
 	// create a copy of the old value
 	oldOsExit := osExit
 
+	// ignore stderr in order to keep the log clean
+	oldStderr := os.Stderr
+	os.Stderr, _ = os.Open("/dev/null")
+
 	// restore previous state after the test
-	defer func() { osExit = oldOsExit }()
+	defer func() {
+		osExit = oldOsExit
+		os.Stderr = oldStderr
+	}()
 
 	// reassign osExit
 	osExit = testOsExit
@@ -592,8 +606,15 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 	// create a copy of the old value
 	oldOsExit := osExit
 
+	// ignore stderr in order to keep the log clean
+	oldStderr := os.Stderr
+	os.Stderr, _ = os.Open("/dev/null")
+
 	// restore previous state after the test
-	defer func() { osExit = oldOsExit }()
+	defer func() {
+		osExit = oldOsExit
+		os.Stderr = oldStderr
+	}()
 
 	// reassign osExit
 	osExit = testOsExit
