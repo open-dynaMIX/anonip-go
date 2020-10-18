@@ -680,6 +680,11 @@ func TestRegexMatching(t *testing.T) {
 			Expected: "blabla/ 3.3.0.0 /blublu",
 			Regex:    "^blabla/ (.*) /blublu$",
 		},
+		{
+			Input:    "1.1.1.1 - somefixedstring: 2.2.2.2 - some random stuff - 3.3.3.3",
+			Expected: "1.1.0.0 - somefixedstring: 2.2.0.0 - some random stuff - 3.3.0.0",
+			Regex:    "^(.*) - somefixedstring: (.*) - .* - (.*)",
+		},
 	}
 
 	for _, tCase := range testMap {
