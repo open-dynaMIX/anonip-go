@@ -135,7 +135,7 @@ func printLog(w io.Writer, line string) {
 }
 
 func logError(err error) {
-	os.Stderr.WriteString("error:" + err.Error())
+	os.Stderr.WriteString("error: " + err.Error() + "\n")
 }
 
 func handleLine(line string, args Args, channel chan string) {
