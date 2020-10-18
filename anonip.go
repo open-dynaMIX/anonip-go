@@ -4,6 +4,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"regexp"
 	"strings"
 )
 import "bufio"
@@ -14,6 +15,7 @@ import "github.com/alexflint/go-arg"
 var osExit = os.Exit
 var logWriter = os.Stdout
 var logReader io.Reader = os.Stdin
+var regex *regexp.Regexp
 var privateIPBlocksStrings = []string{
 	"127.0.0.0/8",    // IPv4 loopback
 	"10.0.0.0/8",     // RFC1918
@@ -30,7 +32,7 @@ func OpenFile(name string, flag int, perm os.FileMode) *os.File {
 	f, err := os.OpenFile(name, flag, perm)
 	if err != nil {
 		logError(err)
-		osExit(1)
+		osExit(-1)
 		return nil // just in case osExit was monkey-patched
 	}
 	return f
@@ -112,7 +114,11 @@ func getIP(ipString string) (string, net.IP) {
 	return ipString, ip
 }
 
-func getIPStrings(line string, columns []uint, delimiter string) []string {
+func getIPStringsRegex(line string, regex *regexp.Regexp) []string {
+	return regex.FindStringSubmatch(line)
+}
+
+func getIPStringsColumn(line string, columns []uint, delimiter string) []string {
 	logList := strings.Split(line, delimiter)
 	ipList := []string{}
 	for _, column := range columns {
@@ -137,7 +143,12 @@ func handleLine(line string, args Args, channel chan string) {
 		channel <- line
 		return
 	}
-	ipStrings := getIPStrings(line, args.Columns, args.Delimiter)
+	var ipStrings []string
+	if args.Regex != "" {
+		ipStrings = getIPStringsRegex(line, regex)
+	} else {
+		ipStrings = getIPStringsColumn(line, args.Columns, args.Delimiter)
+	}
 	for _, ipString := range ipStrings {
 		ipString, ip := getIP(ipString)
 		if ip == nil {
@@ -169,6 +180,7 @@ type Args struct {
 	Columns     []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
 	Delimiter   string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
 	Replace     *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
+	Regex       string  `arg:"--regex" help:"regex"`
 	SkipPrivate bool    `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
 }
 
@@ -193,6 +205,13 @@ func parseArgs() (Args, *arg.Parser, error) {
 	}
 	if args.IpV6Mask < 1 || args.IpV6Mask > 128 {
 		return args, p, errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128!")
+	}
+	if args.Regex != "" {
+		r, err := regexp.Compile(args.Regex)
+		if err != nil {
+			return args, p, errors.New("argument --regex: must be a valid regex string!")
+		}
+		regex = r
 	}
 	if len(args.Columns) == 0 {
 		args.Columns = append(args.Columns, 0)
@@ -219,7 +238,7 @@ func run(args Args) {
 	}
 	if err := scanner.Err(); err != nil {
 		logError(err)
-		osExit(1)
+		osExit(-1)
 		return // just in case osExit was monkey-patched
 	}
 }
@@ -229,7 +248,7 @@ func main() {
 	if err != nil {
 		p.WriteUsage(os.Stderr)
 		logError(err)
-		osExit(1)
+		osExit(-1)
 		return // just in case osExit was monkey-patched
 	}
 	run(args)

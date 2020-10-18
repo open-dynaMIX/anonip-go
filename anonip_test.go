@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"reflect"
+	"regexp"
 	"testing"
 	"testing/iotest"
 )
@@ -370,24 +371,7 @@ func TestArgsIPMasks(t *testing.T) {
 	}
 }
 
-func TestMainSuccess(t *testing.T) {
-	type TestCase struct {
-		Input    []byte
-		Expected string
-	}
-	testMap := []TestCase{
-		{
-			Input:    []byte("192.168.100.200\n"),
-			Expected: "192.168.96.0\n",
-		},
-		{
-			Input:    []byte("2001:0db8:85a3:0000:0000:8a2e:0370:7334\n"),
-			Expected: "2001:db8:85a0::\n",
-		},
-	}
-
-	os.Args = []string{"anonip"}
-
+func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 	// create a copy of the old stdin and stdout
 	oldStdin := os.Stdin
 	oldStdout := os.Stdout
@@ -407,25 +391,54 @@ func TestMainSuccess(t *testing.T) {
 		logWriter = oldStdout
 	}()
 
+	os.Args = []string{"anonip"}
+	if Regex != "" {
+		os.Args = append(os.Args, []string{"--regex", Regex}...)
+	}
+	// Write input to stdin pipe
+	if _, err := stdinPipeWrite.Write(Input); err != nil {
+		log.Fatal(err)
+	}
+
+	go main()
+
+	// read the output from the stdout pipe
+	buf := make([]byte, 1024)
+	n, err := stdoutPipeRead.Read(buf)
+	if err != nil {
+		log.Fatal(err)
+	}
+	output := string(buf[:n])
+
+	if output != Expected {
+		t.Errorf("Wanted: %v, Got: %v", Expected, output)
+	}
+}
+
+func TestMainSuccess(t *testing.T) {
+	type TestCase struct {
+		Input    []byte
+		Expected string
+		Regex    string
+	}
+	testMap := []TestCase{
+		{
+			Input:    []byte("192.168.100.200\n"),
+			Expected: "192.168.96.0\n",
+		},
+		{
+			Input:    []byte("2001:0db8:85a3:0000:0000:8a2e:0370:7334\n"),
+			Expected: "2001:db8:85a0::\n",
+		},
+		{
+			Input:    []byte("bla 192.168.100.200\n"),
+			Expected: "bla 192.168.96.0\n",
+			Regex:    "^bla (.*)",
+		},
+	}
+
 	for _, tCase := range testMap {
-		// Write input to stdin pipe
-		if _, err := stdinPipeWrite.Write(tCase.Input); err != nil {
-			log.Fatal(err)
-		}
-
-		go main()
-
-		// read the output from the stdout pipe
-		buf := make([]byte, 1024)
-		n, err := stdoutPipeRead.Read(buf)
-		if err != nil {
-			log.Fatal(err)
-		}
-		output := string(buf[:n])
-
-		if output != tCase.Expected {
-			t.Errorf("Wanted: %v, Got: %v", tCase.Expected, output)
-		}
+		_TestMain(tCase.Input, tCase.Expected, tCase.Regex, t)
 	}
 }
 
@@ -436,6 +449,7 @@ func TestMainFail(t *testing.T) {
 		{"-6", "-1"},
 		{"-o"},
 		{"--input"},
+		{"--regex", "\\8"},
 	}
 
 	// ignore stderr in order to keep the log clean
@@ -480,8 +494,10 @@ func TestMainFail(t *testing.T) {
 		main()
 
 		// Check if exit code has been called
-		if got != 1 {
-			t.Errorf("Expected exit code: 1, got: %d", got)
+		_got := got
+		got = 0
+		if _got != -1 {
+			t.Errorf("Expected exit code: -1, got: %d", _got)
 		}
 	}
 }
@@ -515,8 +531,8 @@ func TestRunFail(t *testing.T) {
 
 	run(args)
 
-	if got != 1 {
-		t.Errorf("Expected exit code: 1, got: %d", got)
+	if got != -1 {
+		t.Errorf("Expected exit code: -1, got: %d", got)
 	}
 }
 
@@ -644,5 +660,36 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 
 	if got != 2 {
 		t.Errorf("Expected exit code: 2, got: %d", got)
+	}
+}
+
+func TestRegexMatching(t *testing.T) {
+	type TestCase struct {
+		Input    string
+		Expected string
+		Regex    string
+	}
+	testMap := []TestCase{
+		{
+			Input:    "3.3.3.3 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
+			Expected: "3.3.0.0 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
+			Regex:    "(?:^(.*) - - |.* - somefixedstring: (.*) - .* - (.*))",
+		},
+		{
+			Input:    "blabla/ 3.3.3.3 /blublu",
+			Expected: "blabla/ 3.3.0.0 /blublu",
+			Regex:    "^blabla/ (.*) /blublu$",
+		},
+	}
+
+	for _, tCase := range testMap {
+		channel := make(chan string)
+		args := GetDefaultArgs()
+		args.Regex = tCase.Regex
+		regex = regexp.MustCompile(args.Regex)
+		go handleLine(tCase.Input, args, channel)
+		if maskedLine := <-channel; maskedLine != tCase.Expected {
+			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+		}
 	}
 }
