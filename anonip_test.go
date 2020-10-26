@@ -381,14 +381,14 @@ func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 	stdinPipeRead, stdinPipeWrite, _ := os.Pipe()
 
 	// reassign stdin and stdout
-	logReader = stdinPipeRead
-	logWriter = stdoutPipeWrite
+	defaultLogReader = stdinPipeRead
+	defaultLogWriter = stdoutPipeWrite
 
 	// make sure to clean up afterwards
 	defer func() {
 		os.Args = []string{"anonip"}
-		logReader = oldStdin
-		logWriter = oldStdout
+		defaultLogReader = oldStdin
+		defaultLogWriter = oldStdout
 	}()
 
 	os.Args = []string{"anonip"}
@@ -515,17 +515,22 @@ func TestRunFail(t *testing.T) {
 	// ignore stderr in order to keep the log clean
 	oldStderr := os.Stderr
 	os.Stderr, _ = os.Open("/dev/null")
+	oldDefaultLogReader := defaultLogReader
+	oldDefaultLogWriter := defaultLogWriter
 
 	// restore previous state after the test
 	defer func() {
 		osExit = oldOsExit
 		os.Stderr = oldStderr
+		defaultLogReader = oldDefaultLogReader
+		defaultLogWriter = oldDefaultLogWriter
 	}()
 
 	// reassign osExit
 	osExit = testOsExit
 
-	logReader = iotest.TimeoutReader(bytes.NewReader([]byte("test")))
+	defaultLogReader = iotest.TimeoutReader(bytes.NewReader([]byte("foo")))
+	defaultLogWriter, _ = os.Open("/dev/null")
 
 	args := GetDefaultArgs()
 

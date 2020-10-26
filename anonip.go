@@ -13,8 +13,8 @@ import "github.com/alexflint/go-arg"
 
 // to enable monkey-patching during tests
 var osExit = os.Exit
-var logWriter = os.Stdout
-var logReader io.Reader = os.Stdin
+var defaultLogWriter = os.Stdout
+var defaultLogReader io.Reader = os.Stdin
 var regex *regexp.Regexp
 var privateIPBlocksStrings = []string{
 	"127.0.0.0/8",    // IPv4 loopback
@@ -172,32 +172,34 @@ func handleLine(line string, args Args, channel chan string) {
 }
 
 type Args struct {
-	IpV4Mask    int     `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
-	IpV6Mask    int     `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
-	Increment   uint    `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
-	Output      string  `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
-	Input       string  `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
-	Columns     []uint  `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
-	Delimiter   string  `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
-	Replace     *string `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
-	Regex       string  `arg:"--regex" help:"regex"`
-	SkipPrivate bool    `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
+	IpV4Mask    int       `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IpV6Mask    int       `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
+	Increment   uint      `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
+	RawOutput   string    `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
+	Output      io.Writer `arg:"-"`
+	RawInput    string    `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
+	Input       io.Reader `arg:"-"`
+	Columns     []uint    `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
+	Delimiter   string    `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
+	Replace     *string   `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
+	Regex       string    `arg:"--regex" help:"regex"`
+	SkipPrivate bool      `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
 	var args Args
 	p := arg.MustParse(&args)
 
-	args.Output = strings.Trim(args.Output, " ")
-	if args.Output != "" {
-		file := OpenFile(args.Output, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
-		logWriter = file
+	args.Output = defaultLogWriter
+	if output := strings.Trim(args.RawOutput, " "); output != "" {
+		file := OpenFile(args.RawOutput, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+		args.Output = file
 	}
 
-	args.Input = strings.Trim(args.Input, " ")
-	if args.Input != "" {
-		file := OpenFile(args.Input, os.O_RDONLY, 0)
-		logReader = file
+	args.Input = defaultLogReader
+	if input := strings.Trim(args.RawInput, " "); input != "" {
+		file := OpenFile(args.RawInput, os.O_RDONLY, 0)
+		args.Input = file
 	}
 
 	if args.IpV4Mask < 1 || args.IpV4Mask > 32 {
@@ -231,10 +233,10 @@ func run(args Args) {
 		initPrivateIPBlocks()
 	}
 	channel := make(chan string)
-	scanner := bufio.NewScanner(logReader)
+	scanner := bufio.NewScanner(args.Input)
 	for scanner.Scan() {
 		go handleLine(scanner.Text(), args, channel)
-		printLog(logWriter, <-channel)
+		printLog(args.Output, <-channel)
 	}
 	if err := scanner.Err(); err != nil {
 		logError(err)
