@@ -15,7 +15,7 @@ import "github.com/alexflint/go-arg"
 var osExit = os.Exit
 var defaultLogWriter = os.Stdout
 var defaultLogReader io.Reader = os.Stdin
-var regex *regexp.Regexp
+
 var privateIPBlocksStrings = []string{
 	"127.0.0.0/8",    // IPv4 loopback
 	"10.0.0.0/8",     // RFC1918
@@ -144,8 +144,8 @@ func handleLine(line string, args Args, channel chan string) {
 		return
 	}
 	var ipStrings []string
-	if args.Regex != "" {
-		ipStrings = getIPStringsRegex(line, regex)
+	if args.Regex != nil {
+		ipStrings = getIPStringsRegex(line, args.Regex)
 	} else {
 		ipStrings = getIPStringsColumn(line, args.Columns, args.Delimiter)
 	}
@@ -172,18 +172,19 @@ func handleLine(line string, args Args, channel chan string) {
 }
 
 type Args struct {
-	IpV4Mask    int       `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
-	IpV6Mask    int       `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
-	Increment   uint      `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
-	RawOutput   string    `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
-	Output      io.Writer `arg:"-"`
-	RawInput    string    `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
-	Input       io.Reader `arg:"-"`
-	Columns     []uint    `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
-	Delimiter   string    `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
-	Replace     *string   `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
-	Regex       string    `arg:"--regex" help:"regex"`
-	SkipPrivate bool      `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
+	IpV4Mask    int            `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IpV6Mask    int            `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
+	Increment   uint           `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
+	RawOutput   string         `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
+	Output      io.Writer      `arg:"-"`
+	RawInput    string         `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
+	Input       io.Reader      `arg:"-"`
+	Columns     []uint         `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
+	Delimiter   string         `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
+	Replace     *string        `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
+	RawRegex    []string       `arg:"--regex" placeholder:"STRING [STRING ...]" help:"regex"`
+	Regex       *regexp.Regexp `arg:"-"`
+	SkipPrivate bool           `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
@@ -208,12 +209,13 @@ func parseArgs() (Args, *arg.Parser, error) {
 	if args.IpV6Mask < 1 || args.IpV6Mask > 128 {
 		return args, p, errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128!")
 	}
-	if args.Regex != "" {
-		r, err := regexp.Compile(args.Regex)
+
+	if len(args.RawRegex) != 0 {
+		r, err := regexp.Compile(strings.Join(args.RawRegex, "|"))
 		if err != nil {
 			return args, p, errors.New("argument --regex: must be a valid regex string!")
 		}
-		regex = r
+		args.Regex = r
 	}
 	if len(args.Columns) == 0 {
 		args.Columns = append(args.Columns, 0)

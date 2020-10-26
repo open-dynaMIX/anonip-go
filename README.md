@@ -13,7 +13,7 @@ This is WIP and mainly serves an educational purpose at this time.
 ## Usage
 
 ```
-Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--output FILE] [--input FILE] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING] [--skip-private]
+Usage: anonip [--ipv4mask INTEGER] [--ipv6mask INTEGER] [--increment INTEGER] [--output FILE] [--input FILE] [--columns INTEGER [INTEGER ...]] [--delimiter STRING] [--replace STRING] [--regex STRING [STRING ...]] [--skip-private]
 
 Options:
   --ipv4mask INTEGER, -4 INTEGER
@@ -31,7 +31,8 @@ Options:
                          log delimiter [default:  ]
   --replace STRING, -r STRING
                          replacement string in case address parsing fails (Example: 0.0.0.0)
+  --regex STRING [STRING ...]
+                         regex
   --skip-private, -p     do not mask addresses in private ranges. See IANA Special-Purpose Address Registry [default: false]
   --help, -h             display this help and exit
-
 ```

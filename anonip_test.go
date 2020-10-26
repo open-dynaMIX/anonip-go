@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 	"testing/iotest"
 )
@@ -672,31 +673,30 @@ func TestRegexMatching(t *testing.T) {
 	type TestCase struct {
 		Input    string
 		Expected string
-		Regex    string
+		Regex    []string
 	}
 	testMap := []TestCase{
 		{
 			Input:    "3.3.3.3 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
 			Expected: "3.3.0.0 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
-			Regex:    "(?:^(.*) - - |.* - somefixedstring: (.*) - .* - (.*))",
-		},
-		{
-			Input:    "blabla/ 3.3.3.3 /blublu",
-			Expected: "blabla/ 3.3.0.0 /blublu",
-			Regex:    "^blabla/ (.*) /blublu$",
+			Regex:    []string{"(?:^(.*) - - )", "^(.*) - somefixedstring: (.*) - .* - (.*)"},
 		},
 		{
 			Input:    "1.1.1.1 - somefixedstring: 2.2.2.2 - some random stuff - 3.3.3.3",
 			Expected: "1.1.0.0 - somefixedstring: 2.2.0.0 - some random stuff - 3.3.0.0",
-			Regex:    "^(.*) - somefixedstring: (.*) - .* - (.*)",
+			Regex:    []string{"(?:^(.*) - - )", "^(.*) - somefixedstring: (.*) - .* - (.*)"},
+		},
+		{
+			Input:    "blabla/ 3.3.3.3 /blublu",
+			Expected: "blabla/ 3.3.0.0 /blublu",
+			Regex:    []string{"^blabla/ (.*) /blublu$"},
 		},
 	}
 
 	for _, tCase := range testMap {
 		channel := make(chan string)
 		args := GetDefaultArgs()
-		args.Regex = tCase.Regex
-		regex = regexp.MustCompile(args.Regex)
+		args.Regex = regexp.MustCompile(strings.Join(tCase.Regex, "|"))
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
