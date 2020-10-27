@@ -492,20 +492,22 @@ func TestMainFail(t *testing.T) {
 	}()
 
 	for _, tCase := range testMap {
-		// setup args
-		if len(tCase) == 1 {
-			tCase = append(tCase, tempDir)
-		}
-		os.Args = append([]string{"anonip"}, tCase...)
+		t.Run(strings.Join(tCase, " "), func(t *testing.T) {
+			// setup args
+			if len(tCase) == 1 {
+				tCase = append(tCase, tempDir)
+			}
+			os.Args = append([]string{"anonip"}, tCase...)
 
-		main()
+			main()
 
-		// Check if exit code has been called
-		_got := got
-		got = 0
-		if _got != -1 {
-			t.Errorf("Expected exit code: -1, got: %d", _got)
-		}
+			// Check if exit code has been called
+			_got := got
+			got = 0
+			if _got != -1 {
+				t.Errorf("Expected exit code: -1, got: %d", _got)
+			}
+		})
 	}
 }
 
