@@ -37,13 +37,12 @@ func GetDefaultArgs() Args {
 }
 
 func TestHandleLine(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Expected string
 		V4Mask   int
 		V6Mask   int
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "3.3.3.3",
 			Expected: "3.3.0.0",
@@ -203,23 +202,24 @@ func TestHandleLine(t *testing.T) {
 	}
 
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.IpV4Mask, args.IpV6Mask = tCase.V4Mask, tCase.V6Mask
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.IpV4Mask, args.IpV6Mask = tCase.V4Mask, tCase.V6Mask
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
 
 func TestIncrement(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input     string
 		Increment uint
 		Expected  string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:     "192.168.100.200",
 			Increment: 3,
@@ -232,23 +232,24 @@ func TestIncrement(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.Increment = tCase.Increment
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.Increment = tCase.Increment
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
 
 func TestColumns(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Columns  []uint
 		Expected string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "192.168.100.200 some string with öéäü",
 			Columns:  []uint{0},
@@ -276,23 +277,24 @@ func TestColumns(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.Columns = tCase.Columns
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.Columns = tCase.Columns
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
 
 func TestArgsColumns(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    []string
 		Expected []uint
 		Success  bool
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    []string{""},
 			Expected: []uint{0},
@@ -318,26 +320,27 @@ func TestArgsColumns(t *testing.T) {
 	defer func() { os.Args = []string{"anonip"} }()
 
 	for _, tCase := range testMap {
-		os.Args = []string{"anonip"}
-		if tCase.Input[0] != "" {
-			os.Args = append(os.Args, tCase.Input...)
-		}
-		args, _, err := parseArgs()
-		if err != nil && tCase.Success {
-			t.Errorf("Failed with input: %v", tCase.Input)
-		}
-		if !reflect.DeepEqual(args.Columns, tCase.Expected) {
-			t.Errorf("Test failed")
-		}
+		t.Run(strings.Join(tCase.Input, " "), func(t *testing.T) {
+			os.Args = []string{"anonip"}
+			if tCase.Input[0] != "" {
+				os.Args = append(os.Args, tCase.Input...)
+			}
+			args, _, err := parseArgs()
+			if err != nil && tCase.Success {
+				t.Errorf("Failed with input: %v", tCase.Input)
+			}
+			if !reflect.DeepEqual(args.Columns, tCase.Expected) {
+				t.Errorf("Test failed")
+			}
+		})
 	}
 }
 
 func TestArgsIPMasks(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input   []string
 		Success bool
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:   []string{"-4", "12", "-6", "84"},
 			Success: true,
@@ -359,16 +362,18 @@ func TestArgsIPMasks(t *testing.T) {
 	defer func() { os.Args = []string{"anonip"} }()
 
 	for _, tCase := range testMap {
-		os.Args = []string{"anonip"}
-		if tCase.Input[0] != "" {
-			os.Args = append(os.Args, tCase.Input...)
-		}
-		_, _, err := parseArgs()
-		if err == nil && !tCase.Success {
-			t.Errorf("Should have failed with input: %v", tCase.Input)
-		} else if err != nil && tCase.Success {
-			t.Errorf("Should not have failed with input: %v", tCase.Input)
-		}
+		t.Run(strings.Join(tCase.Input, " "), func(t *testing.T) {
+			os.Args = []string{"anonip"}
+			if tCase.Input[0] != "" {
+				os.Args = append(os.Args, tCase.Input...)
+			}
+			_, _, err := parseArgs()
+			if err == nil && !tCase.Success {
+				t.Errorf("Should have failed with input: %v", tCase.Input)
+			} else if err != nil && tCase.Success {
+				t.Errorf("Should not have failed with input: %v", tCase.Input)
+			}
+		})
 	}
 }
 
@@ -417,12 +422,11 @@ func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 }
 
 func TestMainSuccess(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    []byte
 		Expected string
 		Regex    string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    []byte("192.168.100.200\n"),
 			Expected: "192.168.96.0\n",
@@ -439,7 +443,9 @@ func TestMainSuccess(t *testing.T) {
 	}
 
 	for _, tCase := range testMap {
-		_TestMain(tCase.Input, tCase.Expected, tCase.Regex, t)
+		t.Run(string(tCase.Input), func(t *testing.T) {
+			_TestMain(tCase.Input, tCase.Expected, tCase.Regex, t)
+		})
 	}
 }
 
@@ -543,12 +549,11 @@ func TestRunFail(t *testing.T) {
 }
 
 func TestDelimiter(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input     string
 		Delimiter string
 		Expected  string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:     "192.168.100.200;some;string;with;öéäü",
 			Delimiter: ";",
@@ -561,24 +566,25 @@ func TestDelimiter(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.Delimiter = tCase.Delimiter
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.Delimiter = tCase.Delimiter
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
 
 func TestReplace(t *testing.T) {
-	type TestCase struct {
+	replaceString := "replaceIt"
+	var testMap = []struct {
 		Input    string
 		Replace  *string
 		Expected string
-	}
-	replaceString := "replaceIt"
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "some string without IP",
 			Replace:  nil,
@@ -591,22 +597,23 @@ func TestReplace(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.Replace = tCase.Replace
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.Replace = tCase.Replace
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
 
 func TestSkipPrivate(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Expected string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "10.0.0.1",
 			Expected: "10.0.0.1",
@@ -621,14 +628,16 @@ func TestSkipPrivate(t *testing.T) {
 		},
 	}
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.SkipPrivate = true
-		initPrivateIPBlocks()
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.SkipPrivate = true
+			initPrivateIPBlocks()
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
 
@@ -670,12 +679,11 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 }
 
 func TestRegexMatching(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Expected string
 		Regex    []string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "3.3.3.3 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
 			Expected: "3.3.0.0 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
@@ -694,12 +702,14 @@ func TestRegexMatching(t *testing.T) {
 	}
 
 	for _, tCase := range testMap {
-		channel := make(chan string)
-		args := GetDefaultArgs()
-		args.Regex = regexp.MustCompile(strings.Join(tCase.Regex, "|"))
-		go handleLine(tCase.Input, args, channel)
-		if maskedLine := <-channel; maskedLine != tCase.Expected {
-			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-		}
+		t.Run(tCase.Input, func(t *testing.T) {
+			channel := make(chan string)
+			args := GetDefaultArgs()
+			args.Regex = regexp.MustCompile(strings.Join(tCase.Regex, "|"))
+			go handleLine(tCase.Input, args, channel)
+			if maskedLine := <-channel; maskedLine != tCase.Expected {
+				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
+			}
+		})
 	}
 }
