@@ -8,6 +8,7 @@ import (
 	"os"
 	"reflect"
 	"regexp"
+	"strings"
 	"testing"
 	"testing/iotest"
 )
@@ -381,14 +382,14 @@ func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 	stdinPipeRead, stdinPipeWrite, _ := os.Pipe()
 
 	// reassign stdin and stdout
-	logReader = stdinPipeRead
-	logWriter = stdoutPipeWrite
+	defaultLogReader = stdinPipeRead
+	defaultLogWriter = stdoutPipeWrite
 
 	// make sure to clean up afterwards
 	defer func() {
 		os.Args = []string{"anonip"}
-		logReader = oldStdin
-		logWriter = oldStdout
+		defaultLogReader = oldStdin
+		defaultLogWriter = oldStdout
 	}()
 
 	os.Args = []string{"anonip"}
@@ -515,17 +516,22 @@ func TestRunFail(t *testing.T) {
 	// ignore stderr in order to keep the log clean
 	oldStderr := os.Stderr
 	os.Stderr, _ = os.Open("/dev/null")
+	oldDefaultLogReader := defaultLogReader
+	oldDefaultLogWriter := defaultLogWriter
 
 	// restore previous state after the test
 	defer func() {
 		osExit = oldOsExit
 		os.Stderr = oldStderr
+		defaultLogReader = oldDefaultLogReader
+		defaultLogWriter = oldDefaultLogWriter
 	}()
 
 	// reassign osExit
 	osExit = testOsExit
 
-	logReader = iotest.TimeoutReader(bytes.NewReader([]byte("test")))
+	defaultLogReader = iotest.TimeoutReader(bytes.NewReader([]byte("foo")))
+	defaultLogWriter, _ = os.Open("/dev/null")
 
 	args := GetDefaultArgs()
 
@@ -667,31 +673,30 @@ func TestRegexMatching(t *testing.T) {
 	type TestCase struct {
 		Input    string
 		Expected string
-		Regex    string
+		Regex    []string
 	}
 	testMap := []TestCase{
 		{
 			Input:    "3.3.3.3 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
 			Expected: "3.3.0.0 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
-			Regex:    "(?:^(.*) - - |.* - somefixedstring: (.*) - .* - (.*))",
-		},
-		{
-			Input:    "blabla/ 3.3.3.3 /blublu",
-			Expected: "blabla/ 3.3.0.0 /blublu",
-			Regex:    "^blabla/ (.*) /blublu$",
+			Regex:    []string{"(?:^(.*) - - )", "^(.*) - somefixedstring: (.*) - .* - (.*)"},
 		},
 		{
 			Input:    "1.1.1.1 - somefixedstring: 2.2.2.2 - some random stuff - 3.3.3.3",
 			Expected: "1.1.0.0 - somefixedstring: 2.2.0.0 - some random stuff - 3.3.0.0",
-			Regex:    "^(.*) - somefixedstring: (.*) - .* - (.*)",
+			Regex:    []string{"(?:^(.*) - - )", "^(.*) - somefixedstring: (.*) - .* - (.*)"},
+		},
+		{
+			Input:    "blabla/ 3.3.3.3 /blublu",
+			Expected: "blabla/ 3.3.0.0 /blublu",
+			Regex:    []string{"^blabla/ (.*) /blublu$"},
 		},
 	}
 
 	for _, tCase := range testMap {
 		channel := make(chan string)
 		args := GetDefaultArgs()
-		args.Regex = tCase.Regex
-		regex = regexp.MustCompile(args.Regex)
+		args.Regex = regexp.MustCompile(strings.Join(tCase.Regex, "|"))
 		go handleLine(tCase.Input, args, channel)
 		if maskedLine := <-channel; maskedLine != tCase.Expected {
 			t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
