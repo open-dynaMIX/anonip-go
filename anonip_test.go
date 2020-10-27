@@ -37,13 +37,12 @@ func GetDefaultArgs() Args {
 }
 
 func TestHandleLine(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Expected string
 		V4Mask   int
 		V6Mask   int
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "3.3.3.3",
 			Expected: "3.3.0.0",
@@ -214,12 +213,11 @@ func TestHandleLine(t *testing.T) {
 }
 
 func TestIncrement(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input     string
 		Increment uint
 		Expected  string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:     "192.168.100.200",
 			Increment: 3,
@@ -243,12 +241,11 @@ func TestIncrement(t *testing.T) {
 }
 
 func TestColumns(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Columns  []uint
 		Expected string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "192.168.100.200 some string with öéäü",
 			Columns:  []uint{0},
@@ -287,12 +284,11 @@ func TestColumns(t *testing.T) {
 }
 
 func TestArgsColumns(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    []string
 		Expected []uint
 		Success  bool
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    []string{""},
 			Expected: []uint{0},
@@ -333,11 +329,10 @@ func TestArgsColumns(t *testing.T) {
 }
 
 func TestArgsIPMasks(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input   []string
 		Success bool
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:   []string{"-4", "12", "-6", "84"},
 			Success: true,
@@ -417,12 +412,11 @@ func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 }
 
 func TestMainSuccess(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    []byte
 		Expected string
 		Regex    string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    []byte("192.168.100.200\n"),
 			Expected: "192.168.96.0\n",
@@ -543,12 +537,11 @@ func TestRunFail(t *testing.T) {
 }
 
 func TestDelimiter(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input     string
 		Delimiter string
 		Expected  string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:     "192.168.100.200;some;string;with;öéäü",
 			Delimiter: ";",
@@ -572,13 +565,12 @@ func TestDelimiter(t *testing.T) {
 }
 
 func TestReplace(t *testing.T) {
-	type TestCase struct {
+	replaceString := "replaceIt"
+	var testMap = []struct {
 		Input    string
 		Replace  *string
 		Expected string
-	}
-	replaceString := "replaceIt"
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "some string without IP",
 			Replace:  nil,
@@ -602,11 +594,10 @@ func TestReplace(t *testing.T) {
 }
 
 func TestSkipPrivate(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Expected string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "10.0.0.1",
 			Expected: "10.0.0.1",
@@ -670,12 +661,11 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 }
 
 func TestRegexMatching(t *testing.T) {
-	type TestCase struct {
+	var testMap = []struct {
 		Input    string
 		Expected string
 		Regex    []string
-	}
-	testMap := []TestCase{
+	}{
 		{
 			Input:    "3.3.3.3 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
 			Expected: "3.3.0.0 - - [20/May/2015:21:05:01 +0000] \"GET / HTTP/1.1\" 200 13358 \"-\" \"useragent\"\n",
