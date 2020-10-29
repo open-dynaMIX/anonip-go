@@ -3,10 +3,10 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"os"
-	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -207,9 +207,8 @@ func TestHandleLine(t *testing.T) {
 			args := GetDefaultArgs()
 			args.IpV4Mask, args.IpV6Mask = tCase.V4Mask, tCase.V6Mask
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
@@ -237,9 +236,8 @@ func TestIncrement(t *testing.T) {
 			args := GetDefaultArgs()
 			args.Increment = tCase.Increment
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
@@ -282,9 +280,8 @@ func TestColumns(t *testing.T) {
 			args := GetDefaultArgs()
 			args.Columns = tCase.Columns
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
@@ -326,12 +323,8 @@ func TestArgsColumns(t *testing.T) {
 				os.Args = append(os.Args, tCase.Input...)
 			}
 			args, _, err := parseArgs()
-			if err != nil && tCase.Success {
-				t.Errorf("Failed with input: %v", tCase.Input)
-			}
-			if !reflect.DeepEqual(args.Columns, tCase.Expected) {
-				t.Errorf("Test failed")
-			}
+			assert.True(t, err == nil == tCase.Success, "Failed with input: %v", tCase.Input)
+			assert.Equal(t, args.Columns, tCase.Expected, "Failed with input: %v", tCase.Input)
 		})
 	}
 }
@@ -368,11 +361,7 @@ func TestArgsIPMasks(t *testing.T) {
 				os.Args = append(os.Args, tCase.Input...)
 			}
 			_, _, err := parseArgs()
-			if err == nil && !tCase.Success {
-				t.Errorf("Should have failed with input: %v", tCase.Input)
-			} else if err != nil && tCase.Success {
-				t.Errorf("Should not have failed with input: %v", tCase.Input)
-			}
+			assert.True(t, err == nil == tCase.Success, "Failed with input: %v", tCase.Input)
 		})
 	}
 }
@@ -416,9 +405,7 @@ func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 	}
 	output := string(buf[:n])
 
-	if output != Expected {
-		t.Errorf("Wanted: %v, Got: %v", Expected, output)
-	}
+	assert.Equal(t, output, Expected)
 }
 
 func TestMainSuccess(t *testing.T) {
@@ -504,9 +491,7 @@ func TestMainFail(t *testing.T) {
 			// Check if exit code has been called
 			_got := got
 			got = 0
-			if _got != -1 {
-				t.Errorf("Expected exit code: -1, got: %d", _got)
-			}
+			assert.True(t, _got == -1, "Expected exit code: -1, got: %d", _got)
 		})
 	}
 }
@@ -545,9 +530,7 @@ func TestRunFail(t *testing.T) {
 
 	run(args)
 
-	if got != -1 {
-		t.Errorf("Expected exit code: -1, got: %d", got)
-	}
+	assert.True(t, got == -1, "Expected exit code: -1, got: %d", got)
 }
 
 func TestDelimiter(t *testing.T) {
@@ -573,9 +556,8 @@ func TestDelimiter(t *testing.T) {
 			args := GetDefaultArgs()
 			args.Delimiter = tCase.Delimiter
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
@@ -604,9 +586,8 @@ func TestReplace(t *testing.T) {
 			args := GetDefaultArgs()
 			args.Replace = tCase.Replace
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
@@ -636,9 +617,8 @@ func TestSkipPrivate(t *testing.T) {
 			args.SkipPrivate = true
 			initPrivateIPBlocks()
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
@@ -675,9 +655,7 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 
 	run(args)
 
-	if got != 2 {
-		t.Errorf("Expected exit code: 2, got: %d", got)
-	}
+	assert.True(t, got == 2, "Expected exit code: 2, got: %d", got)
 }
 
 func TestRegexMatching(t *testing.T) {
@@ -709,9 +687,8 @@ func TestRegexMatching(t *testing.T) {
 			args := GetDefaultArgs()
 			args.Regex = regexp.MustCompile(strings.Join(tCase.Regex, "|"))
 			go handleLine(tCase.Input, args, channel)
-			if maskedLine := <-channel; maskedLine != tCase.Expected {
-				t.Errorf("Failing input: %+v\nReceived output: %v", tCase, maskedLine)
-			}
+			maskedLine := <-channel
+			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
 	}
 }
