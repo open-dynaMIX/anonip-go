@@ -25,7 +25,7 @@ jobs:
           draft: false
           prerelease: false
       - name: Upload Release Asset linux-amd64
-        id: upload-release-asset
+        id: upload-release-asset-linux-amd64
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -35,7 +35,7 @@ jobs:
           asset_name: anonip-${{ github.ref }}-linux-amd64
           asset_content_type: application/x-binary
       - name: Upload Release Asset linux-386
-          id: upload-release-asset
+          id: upload-release-asset-linux-386
           uses: actions/upload-release-asset@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -45,7 +45,7 @@ jobs:
             asset_name: anonip-${{ github.ref }}-linux-386
             asset_content_type: application/x-binary
       - name: Upload Release Asset linux-arm
-          id: upload-release-asset
+          id: upload-release-asset-linux-arm
           uses: actions/upload-release-asset@v1
           env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
