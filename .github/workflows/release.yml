@@ -35,22 +35,22 @@ jobs:
           asset_name: anonip-${{ github.ref }}-linux-amd64
           asset_content_type: application/x-binary
       - name: Upload Release Asset linux-386
-          id: upload-release-asset-linux-386
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: ./builds/anonip-${{ github.ref }}-linux-386
-            asset_name: anonip-${{ github.ref }}-linux-386
-            asset_content_type: application/x-binary
+        id: upload-release-asset-linux-386
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./builds/anonip-${{ github.ref }}-linux-386
+          asset_name: anonip-${{ github.ref }}-linux-386
+          asset_content_type: application/x-binary
       - name: Upload Release Asset linux-arm
-          id: upload-release-asset-linux-arm
-          uses: actions/upload-release-asset@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            upload_url: ${{ steps.create_release.outputs.upload_url }}
-            asset_path: ./builds/anonip-${{ github.ref }}-linux-arm
-            asset_name: anonip-${{ github.ref }}-linux-arm
-            asset_content_type: application/x-binary
+        id: upload-release-asset-linux-arm
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./builds/anonip-${{ github.ref }}-linux-arm
+          asset_name: anonip-${{ github.ref }}-linux-arm
+          asset_content_type: application/x-binary
