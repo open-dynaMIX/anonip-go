@@ -17,3 +17,13 @@ build-linux-386:
 .PHONY: build-linux-arm
 build-linux-arm:
 	env GOOS=linux GOARCH=arm go build -o builds/anonip-$(VERSION)-linux-arm github.com/open-dynaMIX/anonip-go
+
+.PHONY: test
+test:
+	@go test -cover -v
+
+
+.PHONY: lint
+lint:
+	@test -z "$(shell gofmt -l ./)"
+	@test -z "$(shell go vet -v ./...)"
