@@ -11,6 +11,8 @@ import "bufio"
 import "net"
 import "github.com/alexflint/go-arg"
 
+var version = "0.0.0-alpha.1"
+
 // to enable monkey-patching during tests
 var osExit = os.Exit
 var defaultLogWriter = os.Stdout
@@ -185,11 +187,17 @@ type Args struct {
 	RawRegex    []string       `arg:"--regex" placeholder:"STRING [STRING ...]" help:"regex"`
 	Regex       *regexp.Regexp `arg:"-"`
 	SkipPrivate bool           `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
+	Version     bool           `arg:"-v,--version" default:"false" help:"show program's version number and exit"`
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
 	var args Args
 	p := arg.MustParse(&args)
+
+	if args.Version {
+		printLog(defaultLogWriter, version)
+		osExit(0)
+	}
 
 	args.Output = defaultLogWriter
 	if output := strings.Trim(args.RawOutput, " "); output != "" {
