@@ -366,6 +366,39 @@ func TestArgsIPMasks(t *testing.T) {
 	}
 }
 
+func TestArgsVersion(t *testing.T) {
+	// patched exit function
+	var got int
+	testOsExit := func(code int) {
+		got = code
+	}
+
+	// override os.Args
+	oldOsArgs := os.Args
+	os.Args = []string{"anonip", "-v"}
+
+	// create a copy of the old value
+	oldOsExit := osExit
+
+	// ignore stderr in order to keep the log clean
+	oldOsStderr := os.Stderr
+	os.Stderr, _ = os.Open("/dev/null")
+
+	// reassign osExit
+	osExit = testOsExit
+
+	// restore previous state after the test
+	defer func() {
+		osExit = oldOsExit
+		os.Args = oldOsArgs
+		os.Stderr = oldOsStderr
+	}()
+
+	main()
+
+	assert.True(t, got == 0, "Expected exit code: 0, got: %d", got)
+}
+
 func _TestMain(Input []byte, Expected string, Regex string, t *testing.T) {
 	// create a copy of the old stdin and stdout
 	oldStdin := os.Stdin

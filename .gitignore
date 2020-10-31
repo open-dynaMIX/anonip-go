@@ -3,3 +3,6 @@
 
 # Output of the go coverage tool
 *.out
+
+# Builds
+builds/
