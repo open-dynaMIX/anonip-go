@@ -14,19 +14,13 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v2
       - name: Run go test
-        run: go test -cover -v
+        run: make test
 
-  gofmt:
+  lint:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
       - name: Setup Go
         uses: actions/setup-go@v2
-      - name: Run go fmt
-        run: |
-          fmt_res=$(gofmt -l .)
-          if [ "$fmt_res" != "" ]; then
-              echo "Would reformat following file(s):"
-              echo "$fmt_res"
-              exit 1
-          fi
+      - name: Lint the code
+        run: make lint
