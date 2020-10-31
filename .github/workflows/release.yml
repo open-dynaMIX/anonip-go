@@ -64,8 +64,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-netbsd-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-netbsd-386
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-386
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-386
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-netbsd-amd64
         id: upload-release-asset-build-netbsd-amd64
@@ -74,8 +74,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-netbsd-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-netbsd-amd64
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-amd64
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-amd64
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-netbsd-arm
         id: upload-release-asset-build-netbsd-arm
@@ -84,8 +84,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-netbsd-arm
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-netbsd-arm
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-arm
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-arm
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-freebsd-386
         id: upload-release-asset-build-freebsd-386
@@ -94,8 +94,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-freebsd-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-freebsd-386
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-386
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-386
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-freebsd-amd64
         id: upload-release-asset-build-freebsd-amd64
@@ -104,8 +104,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-freebsd-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-freebsd-amd64
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-amd64
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-amd64
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-freebsd-arm
         id: upload-release-asset-build-freebsd-arm
@@ -114,8 +114,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-freebsd-arm
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-freebsd-arm
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-arm
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-arm
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-darwin-386
         id: upload-release-asset-build-darwin-386
@@ -124,8 +124,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-darwin-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-darwin-386
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-darwin-386
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-darwin-386
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-darwin-amd64
         id: upload-release-asset-build-darwin-amd64
@@ -134,8 +134,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-darwin-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-darwin-amd64
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-darwin-amd64
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-darwin-amd64
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-openbsd-386
         id: upload-release-asset-build-openbsd-386
@@ -144,8 +144,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-openbsd-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-openbsd-386
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-386
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-386
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-openbsd-amd64
         id: upload-release-asset-build-openbsd-amd64
@@ -154,8 +154,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-openbsd-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-openbsd-amd64
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-amd64
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-amd64
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-windows-386
         id: upload-release-asset-build-windows-386
@@ -164,8 +164,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-windows-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-windows-386
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-windows-386
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-windows-386
           asset_content_type: application/x-binary
       - name: Upload Release Asset build-windows-amd64
         id: upload-release-asset-build-windows-amd64
@@ -174,6 +174,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-build-windows-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-build-windows-amd64
+          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-windows-amd64
+          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-windows-amd64
           asset_content_type: application/x-binary
