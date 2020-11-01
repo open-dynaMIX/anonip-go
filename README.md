@@ -41,16 +41,13 @@ Options:
 
 All Options can also be set via environment variables:
 
- - `IPV4MASK`
- - `IPV6MASK`
- - `INCREMENT`
- - `RAWOUTPUT`
- - `OUTPUT`
- - `RAWINPUT`
- - `INPUT`
- - `COLUMNS`
- - `DELIMITER`
- - `REPLACE`
- - `RAWREGEX`
- - `REGEX`
- - `SKIPPRIVATE`
+ - `ANONIP_IPV4MASK`
+ - `ANONIP_IPV6MASK`
+ - `ANONIP_INCREMENT`
+ - `ANONIP_OUTPUT`
+ - `ANONIP_OUTPUT`
+ - `ANONIP_COLUMNS`
+ - `ANONIP_DELIMITER`
+ - `ANONIP_REPLACE`
+ - `ANONIP_REGEX`
+ - `ANONIP_SKIP_PRIVATE`
