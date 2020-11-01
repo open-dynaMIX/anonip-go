@@ -193,52 +193,112 @@ type Args struct {
 	Version     bool           `arg:"-v,--version" default:"false" help:"show program's version number and exit"`
 }
 
-func parseArgs() (Args, *arg.Parser, error) {
-	var args Args
-	p := arg.MustParse(&args)
-
-	if args.Version {
-		printLog(defaultLogWriter, version)
-		osExit(0)
-	}
-
+// ValidateOutput validates the output arg
+func (args *Args) ValidateOutput() {
 	args.Output = defaultLogWriter
 	if output := strings.Trim(args.RawOutput, " "); output != "" {
 		file := OpenFile(args.RawOutput, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
 		args.Output = file
 	}
+}
 
+// ValidateInput validates the input arg
+func (args *Args) ValidateInput() {
 	args.Input = defaultLogReader
 	if input := strings.Trim(args.RawInput, " "); input != "" {
 		file := OpenFile(args.RawInput, os.O_RDONLY, 0)
 		args.Input = file
 	}
+}
 
+// ValidateIPV4Mask validates the v4 arg
+func (args *Args) ValidateIPV4Mask() error {
 	if args.IPV4Mask < 1 || args.IPV4Mask > 32 {
-		return args, p, errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32")
+		return errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32")
 	}
-	if args.IPV6Mask < 1 || args.IPV6Mask > 128 {
-		return args, p, errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128")
-	}
+	return nil
+}
 
+// ValidateIPV6Mask validates the v6 arg
+func (args *Args) ValidateIPV6Mask() error {
+	if args.IPV6Mask < 1 || args.IPV6Mask > 128 {
+		return errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128")
+	}
+	return nil
+}
+
+// ValidateRegex validates regex arg
+func (args *Args) ValidateRegex() error {
 	if len(args.RawRegex) != 0 {
 		r, err := regexp.Compile(strings.Join(args.RawRegex, "|"))
 		if err != nil {
-			return args, p, errors.New("argument --regex: must be a valid regex string")
+			return errors.New("argument --regex: must be a valid regex string")
 		}
 		args.Regex = r
 	}
+	return nil
+}
+
+// ValidateColumns validates columns
+func (args *Args) ValidateColumns() error {
 	if len(args.Columns) == 0 {
 		args.Columns = append(args.Columns, 0)
 	} else {
 		for i, col := range args.Columns {
 			if col == 0 {
-				return args, p, errors.New("column is 1-based indexed and must be > 0")
+				return errors.New("column is 1-based indexed and must be > 0")
 			}
 			args.Columns[i]--
 		}
 	}
-	return args, p, nil
+	return nil
+}
+
+// ValidateVersion validates and handles the version arg
+func (args *Args) ValidateVersion() {
+	if args.Version {
+		printLog(defaultLogWriter, version)
+		osExit(0)
+	}
+}
+
+// Validate validates all arguments
+func (args *Args) Validate() error {
+	args.ValidateVersion()
+
+	args.ValidateOutput()
+
+	args.ValidateInput()
+
+	err := args.ValidateIPV4Mask()
+	if err != nil {
+		return err
+	}
+
+	err = args.ValidateIPV6Mask()
+	if err != nil {
+		return err
+	}
+
+	err = args.ValidateRegex()
+	if err != nil {
+		return err
+	}
+
+	err = args.ValidateColumns()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func parseArgs() (Args, *arg.Parser, error) {
+	var args Args
+	p := arg.MustParse(&args)
+
+	err := args.Validate()
+	return args, p, err
 }
 
 func run(args Args) {
