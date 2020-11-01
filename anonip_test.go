@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"testing/iotest"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
