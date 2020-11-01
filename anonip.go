@@ -177,68 +177,128 @@ func handleLine(line string, args Args, channel chan string) {
 
 // Args will hold parsed CLI arguments
 type Args struct {
-	IPV4Mask    int            `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
-	IPV6Mask    int            `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
-	Increment   uint           `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
-	RawOutput   string         `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
+	IPV4Mask    int            `arg:"-4,--ipv4mask,env" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IPV6Mask    int            `arg:"-6,--ipv6mask,env" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
+	Increment   uint           `arg:"-i,--increment,env" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
+	RawOutput   string         `arg:"-o,--output,env" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
 	Output      io.Writer      `arg:"-"`
-	RawInput    string         `arg:"--input" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
+	RawInput    string         `arg:"--input,env" placeholder:"FILE" help:"file or FIFO to read from [default: stdin]"`
 	Input       io.Reader      `arg:"-"`
-	Columns     []uint         `arg:"-c,--columns" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
-	Delimiter   string         `arg:"-l,--delimiter" default:" " placeholder:"STRING" help:"log delimiter"`
-	Replace     *string        `arg:"-r,--replace" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
-	RawRegex    []string       `arg:"--regex" placeholder:"STRING [STRING ...]" help:"regex"`
+	Columns     []uint         `arg:"-c,--columns,env" placeholder:"INTEGER [INTEGER ...]" help:"assume IP address is in column n (1-based indexed) [default: 0]"`
+	Delimiter   string         `arg:"-l,--delimiter,env" default:" " placeholder:"STRING" help:"log delimiter"`
+	Replace     *string        `arg:"-r,--replace,env" placeholder:"STRING" help:"replacement string in case address parsing fails (Example: 0.0.0.0)"`
+	RawRegex    []string       `arg:"--regex,env" placeholder:"STRING [STRING ...]" help:"regex"`
 	Regex       *regexp.Regexp `arg:"-"`
-	SkipPrivate bool           `arg:"-p,--skip-private" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
+	SkipPrivate bool           `arg:"-p,--skip-private,env" default:"false" help:"do not mask addresses in private ranges. See IANA Special-Purpose Address Registry"`
 	Version     bool           `arg:"-v,--version" default:"false" help:"show program's version number and exit"`
+}
+
+// ValidateOutput validates the output arg
+func (args *Args) ValidateOutput() {
+	args.Output = defaultLogWriter
+	if output := strings.Trim(args.RawOutput, " "); output != "" {
+		file := OpenFile(args.RawOutput, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
+		args.Output = file
+	}
+}
+
+// ValidateInput validates the input arg
+func (args *Args) ValidateInput() {
+	args.Input = defaultLogReader
+	if input := strings.Trim(args.RawInput, " "); input != "" {
+		file := OpenFile(args.RawInput, os.O_RDONLY, 0)
+		args.Input = file
+	}
+}
+
+// ValidateIPV4Mask validates the v4 arg
+func (args *Args) ValidateIPV4Mask() error {
+	if args.IPV4Mask < 1 || args.IPV4Mask > 32 {
+		return errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32")
+	}
+	return nil
+}
+
+// ValidateIPV6Mask validates the v6 arg
+func (args *Args) ValidateIPV6Mask() error {
+	if args.IPV6Mask < 1 || args.IPV6Mask > 128 {
+		return errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128")
+	}
+	return nil
+}
+
+// ValidateRegex validates regex arg
+func (args *Args) ValidateRegex() error {
+	if len(args.RawRegex) != 0 {
+		r, err := regexp.Compile(strings.Join(args.RawRegex, "|"))
+		if err != nil {
+			return errors.New("argument --regex: must be a valid regex string")
+		}
+		args.Regex = r
+	}
+	return nil
+}
+
+// ValidateColumns validates columns
+func (args *Args) ValidateColumns() error {
+	if len(args.Columns) == 0 {
+		args.Columns = append(args.Columns, 0)
+	} else {
+		for i, col := range args.Columns {
+			if col == 0 {
+				return errors.New("column is 1-based indexed and must be > 0")
+			}
+			args.Columns[i]--
+		}
+	}
+	return nil
+}
+
+// ValidateVersion validates and handles the version arg
+func (args *Args) ValidateVersion() {
+	if args.Version {
+		printLog(defaultLogWriter, version)
+		osExit(0)
+	}
+}
+
+// Validate validates all arguments
+func (args *Args) Validate() error {
+	args.ValidateVersion()
+
+	args.ValidateOutput()
+
+	args.ValidateInput()
+
+	err := args.ValidateIPV4Mask()
+	if err != nil {
+		return err
+	}
+
+	err = args.ValidateIPV6Mask()
+	if err != nil {
+		return err
+	}
+
+	err = args.ValidateRegex()
+	if err != nil {
+		return err
+	}
+
+	err = args.ValidateColumns()
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func parseArgs() (Args, *arg.Parser, error) {
 	var args Args
 	p := arg.MustParse(&args)
 
-	if args.Version {
-		printLog(defaultLogWriter, version)
-		osExit(0)
-	}
-
-	args.Output = defaultLogWriter
-	if output := strings.Trim(args.RawOutput, " "); output != "" {
-		file := OpenFile(args.RawOutput, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
-		args.Output = file
-	}
-
-	args.Input = defaultLogReader
-	if input := strings.Trim(args.RawInput, " "); input != "" {
-		file := OpenFile(args.RawInput, os.O_RDONLY, 0)
-		args.Input = file
-	}
-
-	if args.IPV4Mask < 1 || args.IPV4Mask > 32 {
-		return args, p, errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32")
-	}
-	if args.IPV6Mask < 1 || args.IPV6Mask > 128 {
-		return args, p, errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128")
-	}
-
-	if len(args.RawRegex) != 0 {
-		r, err := regexp.Compile(strings.Join(args.RawRegex, "|"))
-		if err != nil {
-			return args, p, errors.New("argument --regex: must be a valid regex string")
-		}
-		args.Regex = r
-	}
-	if len(args.Columns) == 0 {
-		args.Columns = append(args.Columns, 0)
-	} else {
-		for i, col := range args.Columns {
-			if col == 0 {
-				return args, p, errors.New("column is 1-based indexed and must be > 0")
-			}
-			args.Columns[i]--
-		}
-	}
-	return args, p, nil
+	err := args.Validate()
+	return args, p, err
 }
 
 func run(args Args) {

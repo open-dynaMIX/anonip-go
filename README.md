@@ -38,3 +38,19 @@ Options:
   --version, -v          show program's version number and exit [default: false]
   --help, -h             display this help and exit
 ```
+
+All Options can also be set via environment variables:
+
+ - `IPV4MASK`
+ - `IPV6MASK`
+ - `INCREMENT`
+ - `RAWOUTPUT`
+ - `OUTPUT`
+ - `RAWINPUT`
+ - `INPUT`
+ - `COLUMNS`
+ - `DELIMITER`
+ - `REPLACE`
+ - `RAWREGEX`
+ - `REGEX`
+ - `SKIPPRIVATE`
