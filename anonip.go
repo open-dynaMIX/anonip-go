@@ -107,7 +107,6 @@ func getIP(ipString string) (string, net.IP) {
 	ip := net.ParseIP(ipString)
 	if ip == nil {
 		ipString, ip = _trimBrackets(ipString)
-		ip := net.ParseIP(ipString)
 		if ip == nil {
 			return _handlePort(ipString)
 		}
