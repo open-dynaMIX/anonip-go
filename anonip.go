@@ -132,7 +132,10 @@ func getIPStringsColumn(line string, columns []uint, delimiter string) []string 
 }
 
 func printLog(w io.Writer, line string) {
-	w.Write([]byte(line + "\n"))
+	_, err := w.Write([]byte(line + "\n"))
+	if err != nil {
+		logError(err)
+	}
 }
 
 func logError(err error) {
