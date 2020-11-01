@@ -89,5 +89,4 @@ test:
 
 .PHONY: lint
 lint:
-	@test -z "$(shell gofmt -l ./)"
-	@test -z "$(shell go vet -v ./...)"
+	@golangci-lint run --exclude-use-default=false --enable=golint

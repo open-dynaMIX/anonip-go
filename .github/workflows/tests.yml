@@ -20,7 +20,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - name: Setup Go
-        uses: actions/setup-go@v2
-      - name: Lint the code
-        run: make lint
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v2
+        with:
+          version: v1.32
+          args: --exclude-use-default=false --enable golint

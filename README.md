@@ -2,6 +2,7 @@
 
 [![Build Status](https://github.com/open-dynaMIX/anonip-go/workflows/Tests/badge.svg)](https://github.com/open-dynaMIX/anonip-go/actions?query=workflow%3ATests)
 [![Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen.svg)](https://github.com/open-dynaMIX/anonip-go/blob/master/anonip_test.go#L22)
+[![goreport](https://goreportcard.com/badge/github.com/open-dynaMIX/anonip-go)](https://goreportcard.com/report/github.com/open-dynaMIX/anonip-go)
 [![License](https://img.shields.io/badge/License-BSD%203--Clause-blue.svg)](https://opensource.org/licenses/BSD-3-Clause)
 
 **WIP**

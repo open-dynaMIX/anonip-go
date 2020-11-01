@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"github.com/stretchr/testify/assert"
 	"io/ioutil"
 	"log"
 	"os"
@@ -11,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"testing/iotest"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestMain(m *testing.M) {
@@ -205,7 +206,7 @@ func TestHandleLine(t *testing.T) {
 		t.Run(tCase.Input, func(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
-			args.IpV4Mask, args.IpV6Mask = tCase.V4Mask, tCase.V6Mask
+			args.IPV4Mask, args.IPV6Mask = tCase.V4Mask, tCase.V6Mask
 			go handleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
@@ -597,6 +598,7 @@ func TestDelimiter(t *testing.T) {
 
 func TestReplace(t *testing.T) {
 	replaceString := "replaceIt"
+
 	var testMap = []struct {
 		Input    string
 		Replace  *string
@@ -613,6 +615,7 @@ func TestReplace(t *testing.T) {
 			Expected: "replaceIt string without IP",
 		},
 	}
+
 	for _, tCase := range testMap {
 		t.Run(tCase.Input, func(t *testing.T) {
 			channel := make(chan string)
