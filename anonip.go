@@ -29,7 +29,7 @@ var privateIPBlocksStrings = []string{
 	"fc00::/7",       // IPv6 unique local addr
 }
 
-// Wrapper around os.OpenFile for better control in tests
+// OpenFile is a wrapper around os.OpenFile for better control in tests
 func OpenFile(name string, flag int, perm os.FileMode) *os.File {
 	f, err := os.OpenFile(name, flag, perm)
 	if err != nil {
@@ -69,10 +69,10 @@ func isPrivateIP(ip net.IP) bool {
 
 func maskIP(ip net.IP, args Args) net.IP {
 	if ip := ip.To4(); ip != nil {
-		mask := net.CIDRMask(32-args.IpV4Mask, 32)
+		mask := net.CIDRMask(32-args.IPV4Mask, 32)
 		return ip.Mask(mask)
 	}
-	mask := net.CIDRMask(128-args.IpV6Mask, 128)
+	mask := net.CIDRMask(128-args.IPV6Mask, 128)
 	return ip.Mask(mask)
 }
 
@@ -91,7 +91,7 @@ func _trimBrackets(ipString string) (string, net.IP) {
 }
 
 func _handlePort(ipString string) (string, net.IP) {
-	strippedIpString, _, err := net.SplitHostPort(ipString)
+	strippedIPString, _, err := net.SplitHostPort(ipString)
 	if err != nil {
 		parts := strings.Split(ipString, "]")
 		if len(parts) > 1 {
@@ -100,7 +100,7 @@ func _handlePort(ipString string) (string, net.IP) {
 		return ipString, nil
 	}
 
-	return strippedIpString, net.ParseIP(strippedIpString)
+	return strippedIPString, net.ParseIP(strippedIPString)
 }
 
 func getIP(ipString string) (string, net.IP) {
@@ -139,7 +139,7 @@ func printLog(w io.Writer, line string) {
 }
 
 func logError(err error) {
-	os.Stderr.WriteString("error: " + err.Error() + "\n")
+	_, _ = os.Stderr.WriteString("error: " + err.Error() + "\n")
 }
 
 func handleLine(line string, args Args, channel chan string) {
@@ -166,18 +166,19 @@ func handleLine(line string, args Args, channel chan string) {
 				continue
 			}
 		}
-		maskedIp := maskIP(ip, args)
+		maskedIP := maskIP(ip, args)
 		if args.Increment > 0 {
-			incrementIP(maskedIp, args.Increment)
+			incrementIP(maskedIP, args.Increment)
 		}
-		line = strings.ReplaceAll(line, ipString, maskedIp.String())
+		line = strings.ReplaceAll(line, ipString, maskedIP.String())
 	}
 	channel <- line
 }
 
+// Args will hold parsed CLI arguments
 type Args struct {
-	IpV4Mask    int            `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
-	IpV6Mask    int            `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IPV4Mask    int            `arg:"-4,--ipv4mask" default:"12" placeholder:"INTEGER" help:"truncate the last n bits"`
+	IPV6Mask    int            `arg:"-6,--ipv6mask" default:"84" placeholder:"INTEGER" help:"truncate the last n bits"`
 	Increment   uint           `arg:"-i,--increment" default:"0" placeholder:"INTEGER" help:"increment the IP address by n"`
 	RawOutput   string         `arg:"-o,--output" placeholder:"FILE" help:"file or FIFO to write to [default: stdout]"`
 	Output      io.Writer      `arg:"-"`
@@ -213,17 +214,17 @@ func parseArgs() (Args, *arg.Parser, error) {
 		args.Input = file
 	}
 
-	if args.IpV4Mask < 1 || args.IpV4Mask > 32 {
-		return args, p, errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32!")
+	if args.IPV4Mask < 1 || args.IPV4Mask > 32 {
+		return args, p, errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32")
 	}
-	if args.IpV6Mask < 1 || args.IpV6Mask > 128 {
-		return args, p, errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128!")
+	if args.IPV6Mask < 1 || args.IPV6Mask > 128 {
+		return args, p, errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128")
 	}
 
 	if len(args.RawRegex) != 0 {
 		r, err := regexp.Compile(strings.Join(args.RawRegex, "|"))
 		if err != nil {
-			return args, p, errors.New("argument --regex: must be a valid regex string!")
+			return args, p, errors.New("argument --regex: must be a valid regex string")
 		}
 		args.Regex = r
 	}
@@ -232,7 +233,7 @@ func parseArgs() (Args, *arg.Parser, error) {
 	} else {
 		for i, col := range args.Columns {
 			if col == 0 {
-				return args, p, errors.New("Column is 1-based indexed and must be > 0!")
+				return args, p, errors.New("column is 1-based indexed and must be > 0")
 			}
 			args.Columns[i]--
 		}
