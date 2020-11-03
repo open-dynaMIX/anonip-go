@@ -3,7 +3,7 @@ export CGO_ENABLED=0
 
 .PHONY: build
 build:
-	goreleaser --snapshot --skip-publish --rm-dist
+	goreleaser --snapshot --skip-sign --skip-publish --rm-dist
 
 .PHONY: test
 test:
