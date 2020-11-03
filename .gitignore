@@ -5,4 +5,4 @@
 *.out
 
 # Builds
-builds/
+dist/

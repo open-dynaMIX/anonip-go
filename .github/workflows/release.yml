@@ -3,177 +3,24 @@ name: Create release
 on:
   push:
     tags:
-      - 'v*'
+      - '*'
 
 jobs:
-  build:
-    name: Upload Release Asset
+  goreleaser:
     runs-on: ubuntu-latest
     steps:
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-      - name: Checkout code
+      - name: Checkout
         uses: actions/checkout@v2
-      - name: Build project
-        run: make build-all
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v2
+        with:
+          go-version: 1.14
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v2
+        with:
+          version: latest
+          args: release --skip-sign --rm-dist
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_version.outputs.VERSION }}
-          release_name: ${{ steps.get_version.outputs.VERSION }}
-          draft: false
-          prerelease: false
-      - name: Upload Release Asset linux-amd64
-        id: upload-release-asset-linux-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-linux-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-linux-amd64
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset linux-386
-        id: upload-release-asset-linux-386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-linux-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-linux-386
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset linux-arm
-        id: upload-release-asset-linux-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-linux-arm
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-linux-arm
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-netbsd-386
-        id: upload-release-asset-build-netbsd-386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-386
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-netbsd-amd64
-        id: upload-release-asset-build-netbsd-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-amd64
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-netbsd-arm
-        id: upload-release-asset-build-netbsd-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-arm
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-netbsd-arm
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-freebsd-386
-        id: upload-release-asset-build-freebsd-386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-386
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-freebsd-amd64
-        id: upload-release-asset-build-freebsd-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-amd64
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-freebsd-arm
-        id: upload-release-asset-build-freebsd-arm
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-arm
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-freebsd-arm
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-darwin-386
-        id: upload-release-asset-build-darwin-386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-darwin-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-darwin-386
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-darwin-amd64
-        id: upload-release-asset-build-darwin-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-darwin-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-darwin-amd64
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-openbsd-386
-        id: upload-release-asset-build-openbsd-386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-386
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-openbsd-amd64
-        id: upload-release-asset-build-openbsd-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-openbsd-amd64
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-windows-386
-        id: upload-release-asset-build-windows-386
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-windows-386
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-windows-386
-          asset_content_type: application/x-binary
-      - name: Upload Release Asset build-windows-amd64
-        id: upload-release-asset-build-windows-amd64
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./builds/anonip-${{ steps.get_version.outputs.VERSION }}-windows-amd64
-          asset_name: anonip-${{ steps.get_version.outputs.VERSION }}-windows-amd64
-          asset_content_type: application/x-binary
