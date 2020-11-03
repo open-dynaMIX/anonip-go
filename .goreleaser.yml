@@ -63,7 +63,7 @@ snapshot:
 changelog:
   filters:
     exclude:
-      - "(?i)^Merge"
-      - "(?i)^docs"
-      - "(?i)^test"
-      - "(?i)^chore"
+      - "(?i)^merge"
+      - "(?i)^docs?"
+      - "(?i)^tests?"
+      - "(?i)^chores?"
