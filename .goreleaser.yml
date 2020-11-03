@@ -1,8 +1,8 @@
 env:
   - GO111MODULE=on
-#before:
-#  hooks:
-#    - go mod download
+before:
+  hooks:
+    - go mod download
 builds:
   - id: anonip
     env:
@@ -52,18 +52,6 @@ nfpms:
       - deb
       - rpm
     bindir: /usr/bin
-
-brews:
-  - goarm: 6
-    tap:
-      owner: open-dynaMIX
-      name: homebrew-tap
-    commit_author:
-      name: "Fabio Ambauen"
-      email: "fabio@dnmx.ch"
-    homepage: "https://www.digitale-gesellschaft.ch"
-    description: "Anonip is a tool to anonymize IP addresses in log files."
-    # skip_upload: true
 
 signs:
   - artifacts: checksum
