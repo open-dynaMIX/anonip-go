@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -14,6 +15,12 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+var ignoreCoverage bool
+
+func init() {
+	flag.BoolVar(&ignoreCoverage, "ic", false, "Do not enforce 100% coverage")
+}
+
 func TestMain(m *testing.M) {
 	rc := m.Run()
 
@@ -21,7 +28,7 @@ func TestMain(m *testing.M) {
 	// and CoverMode will be non empty if run with -cover
 	if rc == 0 && testing.CoverMode() != "" {
 		c := testing.Coverage()
-		if c < 1.0 { // enforce 100% coverage
+		if !ignoreCoverage && c < 1.0 { // enforce 100% coverage
 			fmt.Println("Tests passed but coverage failed at", c)
 			rc = -1
 		}
