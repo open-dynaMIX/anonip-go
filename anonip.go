@@ -29,7 +29,7 @@ var privateIPBlocksStrings = []string{
 	"fc00::/7",       // IPv6 unique local addr
 }
 
-// OpenFile is a wrapper around os.OpenFile for better control in tests
+// OpenFile is a wrapper around os.OpenFile for centralization of error handling
 func OpenFile(name string, flag int, perm os.FileMode) *os.File {
 	f, err := os.OpenFile(name, flag, perm)
 	if err != nil {
