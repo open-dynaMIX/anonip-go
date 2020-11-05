@@ -265,29 +265,19 @@ func (args *Args) ValidateVersion() {
 // Validate validates all arguments
 func (args *Args) Validate() error {
 	args.ValidateVersion()
-
 	args.ValidateOutput()
-
 	args.ValidateInput()
 
-	err := args.ValidateIPV4Mask()
-	if err != nil {
-		return err
-	}
-
-	err = args.ValidateIPV6Mask()
-	if err != nil {
-		return err
-	}
-
-	err = args.ValidateRegex()
-	if err != nil {
-		return err
-	}
-
-	err = args.ValidateColumns()
-	if err != nil {
-		return err
+	for _, method := range []func() error{
+		args.ValidateIPV4Mask,
+		args.ValidateIPV6Mask,
+		args.ValidateRegex,
+		args.ValidateColumns,
+	} {
+		err := method()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
