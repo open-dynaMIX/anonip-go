@@ -25,7 +25,7 @@ func TestMain(m *testing.M) {
 	rc := m.Run()
 
 	// rc 0 means we've passed,
-	// and CoverMode will be non empty if run with -cover
+	// and CoverMode will be non empty if Run with -cover
 	if rc == 0 && testing.CoverMode() != "" {
 		c := testing.Coverage()
 		if !ignoreCoverage && c < 1.0 { // enforce 100% coverage
@@ -214,7 +214,7 @@ func TestHandleLine(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
 			args.IPV4Mask, args.IPV6Mask = tCase.V4Mask, tCase.V6Mask
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
@@ -243,7 +243,7 @@ func TestIncrement(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
 			args.Increment = tCase.Increment
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
@@ -287,7 +287,7 @@ func TestColumns(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
 			args.Columns = tCase.Columns
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
@@ -569,7 +569,7 @@ func TestRunFail(t *testing.T) {
 
 	args := GetDefaultArgs()
 
-	run(args)
+	Run(args)
 
 	assert.True(t, got == -1, "Expected exit code: -1, got: %d", got)
 }
@@ -596,7 +596,7 @@ func TestDelimiter(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
 			args.Delimiter = tCase.Delimiter
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
@@ -628,7 +628,7 @@ func TestReplace(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
 			args.Replace = tCase.Replace
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
@@ -659,7 +659,7 @@ func TestSkipPrivate(t *testing.T) {
 			args := GetDefaultArgs()
 			args.SkipPrivate = true
 			initPrivateIPBlocks()
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
@@ -696,7 +696,7 @@ func TestFailInitPrivateIPBlocks(t *testing.T) {
 	args := GetDefaultArgs()
 	args.SkipPrivate = true
 
-	run(args)
+	Run(args)
 
 	assert.True(t, got == 2, "Expected exit code: 2, got: %d", got)
 }
@@ -729,7 +729,7 @@ func TestRegexMatching(t *testing.T) {
 			channel := make(chan string)
 			args := GetDefaultArgs()
 			args.Regex = regexp.MustCompile(strings.Join(tCase.Regex, "|"))
-			go handleLine(tCase.Input, args, channel)
+			go HandleLine(tCase.Input, args, channel)
 			maskedLine := <-channel
 			assert.Equal(t, maskedLine, tCase.Expected, "Failing input: %+v\nReceived output: \"%v\"", tCase, maskedLine)
 		})
