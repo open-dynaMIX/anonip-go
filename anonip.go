@@ -54,7 +54,8 @@ func initPrivateIPBlocks() {
 	}
 }
 
-func isPrivateIP(ip net.IP) bool {
+// IsPrivateIP returns true for IP addresses in private blocks
+func IsPrivateIP(ip net.IP) bool {
 	if ip.IsLoopback() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() {
 		return true
 	}
@@ -67,16 +68,18 @@ func isPrivateIP(ip net.IP) bool {
 	return false
 }
 
-func maskIP(ip net.IP, args Args) net.IP {
+// MaskIP masks a single IP address
+func MaskIP(ip net.IP, IPV4Mask int, IPV6Mask int) net.IP {
 	if ip := ip.To4(); ip != nil {
-		mask := net.CIDRMask(32-args.IPV4Mask, 32)
+		mask := net.CIDRMask(32-IPV4Mask, 32)
 		return ip.Mask(mask)
 	}
-	mask := net.CIDRMask(128-args.IPV6Mask, 128)
+	mask := net.CIDRMask(128-IPV6Mask, 128)
 	return ip.Mask(mask)
 }
 
-func incrementIP(ip net.IP, amount uint) {
+// IncrementIP imcrements a single IP address
+func IncrementIP(ip net.IP, amount uint) {
 	for i := len(ip) - 1; i >= 0; i-- {
 		ip[i] += byte(amount)
 		if ip[i] != 0 {
@@ -85,12 +88,12 @@ func incrementIP(ip net.IP, amount uint) {
 	}
 }
 
-func _trimBrackets(ipString string) (string, net.IP) {
+func trimBrackets(ipString string) (string, net.IP) {
 	ipString = strings.Trim(ipString, "[]")
 	return ipString, net.ParseIP(ipString)
 }
 
-func _handlePort(ipString string) (string, net.IP) {
+func handlePort(ipString string) (string, net.IP) {
 	strippedIPString, _, err := net.SplitHostPort(ipString)
 	if err != nil {
 		parts := strings.Split(ipString, "]")
@@ -103,23 +106,26 @@ func _handlePort(ipString string) (string, net.IP) {
 	return strippedIPString, net.ParseIP(strippedIPString)
 }
 
-func getIP(ipString string) (string, net.IP) {
+// GetIP extracts an IP address from a string
+func GetIP(ipString string) (string, net.IP) {
 	ip := net.ParseIP(ipString)
 	if ip == nil {
-		ipString, ip = _trimBrackets(ipString)
+		ipString, ip = trimBrackets(ipString)
 		if ip == nil {
-			return _handlePort(ipString)
+			return handlePort(ipString)
 		}
 		return ipString, ip
 	}
 	return ipString, ip
 }
 
-func getIPStringsRegex(line string, regex *regexp.Regexp) []string {
+// GetIPStringsRegex extracts IP addresses as strings with regex
+func GetIPStringsRegex(line string, regex *regexp.Regexp) []string {
 	return regex.FindStringSubmatch(line)
 }
 
-func getIPStringsColumn(line string, columns []uint, delimiter string) []string {
+// GetIPStringsColumn extracts IP addresses as strings
+func GetIPStringsColumn(line string, columns []uint, delimiter string) []string {
 	logList := strings.Split(line, delimiter)
 	ipList := []string{}
 	for _, column := range columns {
@@ -142,19 +148,20 @@ func logError(err error) {
 	_, _ = os.Stderr.WriteString("error: " + err.Error() + "\n")
 }
 
-func handleLine(line string, args Args, channel chan string) {
+// HandleLine handles a single line from the log
+func HandleLine(line string, args Args, channel chan string) {
 	if line == "" {
 		channel <- line
 		return
 	}
 	var ipStrings []string
 	if args.Regex != nil {
-		ipStrings = getIPStringsRegex(line, args.Regex)
+		ipStrings = GetIPStringsRegex(line, args.Regex)
 	} else {
-		ipStrings = getIPStringsColumn(line, args.Columns, args.Delimiter)
+		ipStrings = GetIPStringsColumn(line, args.Columns, args.Delimiter)
 	}
 	for _, ipString := range ipStrings {
-		ipString, ip := getIP(ipString)
+		ipString, ip := GetIP(ipString)
 		if ip == nil {
 			if args.Replace != nil {
 				line = strings.Replace(line, ipString, *args.Replace, 1)
@@ -162,13 +169,13 @@ func handleLine(line string, args Args, channel chan string) {
 			continue
 		}
 		if args.SkipPrivate {
-			if isPrivateIP(ip) {
+			if IsPrivateIP(ip) {
 				continue
 			}
 		}
-		maskedIP := maskIP(ip, args)
+		maskedIP := MaskIP(ip, args.IPV4Mask, args.IPV6Mask)
 		if args.Increment > 0 {
-			incrementIP(maskedIP, args.Increment)
+			IncrementIP(maskedIP, args.Increment)
 		}
 		line = strings.ReplaceAll(line, ipString, maskedIP.String())
 	}
@@ -193,8 +200,7 @@ type Args struct {
 	Version     bool           `arg:"-v,--version" default:"false" help:"show program's version number and exit"`
 }
 
-// ValidateOutput validates the output arg
-func (args *Args) ValidateOutput() {
+func (args *Args) validateOutput() {
 	args.Output = defaultLogWriter
 	if output := strings.Trim(args.RawOutput, " "); output != "" {
 		file := OpenFile(args.RawOutput, os.O_RDWR|os.O_APPEND|os.O_CREATE, 0660)
@@ -202,8 +208,7 @@ func (args *Args) ValidateOutput() {
 	}
 }
 
-// ValidateInput validates the input arg
-func (args *Args) ValidateInput() {
+func (args *Args) validateInput() {
 	args.Input = defaultLogReader
 	if input := strings.Trim(args.RawInput, " "); input != "" {
 		file := OpenFile(args.RawInput, os.O_RDONLY, 0)
@@ -211,24 +216,21 @@ func (args *Args) ValidateInput() {
 	}
 }
 
-// ValidateIPV4Mask validates the v4 arg
-func (args *Args) ValidateIPV4Mask() error {
+func (args *Args) validateIPV4Mask() error {
 	if args.IPV4Mask < 1 || args.IPV4Mask > 32 {
 		return errors.New("argument -4/--ipv4mask: must be an integer between 1 and 32")
 	}
 	return nil
 }
 
-// ValidateIPV6Mask validates the v6 arg
-func (args *Args) ValidateIPV6Mask() error {
+func (args *Args) validateIPV6Mask() error {
 	if args.IPV6Mask < 1 || args.IPV6Mask > 128 {
 		return errors.New("argument -6/--ipv6mask: must be an integer between 1 and 128")
 	}
 	return nil
 }
 
-// ValidateRegex validates regex arg
-func (args *Args) ValidateRegex() error {
+func (args *Args) validateRegex() error {
 	if len(args.RawRegex) != 0 {
 		r, err := regexp.Compile(strings.Join(args.RawRegex, "|"))
 		if err != nil {
@@ -239,8 +241,7 @@ func (args *Args) ValidateRegex() error {
 	return nil
 }
 
-// ValidateColumns validates columns
-func (args *Args) ValidateColumns() error {
+func (args *Args) validateColumns() error {
 	if len(args.Columns) == 0 {
 		args.Columns = append(args.Columns, 0)
 	} else {
@@ -254,8 +255,7 @@ func (args *Args) ValidateColumns() error {
 	return nil
 }
 
-// ValidateVersion validates and handles the version arg
-func (args *Args) ValidateVersion() {
+func (args *Args) validateVersion() {
 	if args.Version {
 		printLog(defaultLogWriter, version)
 		osExit(0)
@@ -264,30 +264,20 @@ func (args *Args) ValidateVersion() {
 
 // Validate validates all arguments
 func (args *Args) Validate() error {
-	args.ValidateVersion()
+	args.validateVersion()
+	args.validateOutput()
+	args.validateInput()
 
-	args.ValidateOutput()
-
-	args.ValidateInput()
-
-	err := args.ValidateIPV4Mask()
-	if err != nil {
-		return err
-	}
-
-	err = args.ValidateIPV6Mask()
-	if err != nil {
-		return err
-	}
-
-	err = args.ValidateRegex()
-	if err != nil {
-		return err
-	}
-
-	err = args.ValidateColumns()
-	if err != nil {
-		return err
+	for _, method := range []func() error{
+		args.validateIPV4Mask,
+		args.validateIPV6Mask,
+		args.validateRegex,
+		args.validateColumns,
+	} {
+		err := method()
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -301,14 +291,15 @@ func parseArgs() (Args, *arg.Parser, error) {
 	return args, p, err
 }
 
-func run(args Args) {
+// Run starts the loop for anonymization of OP addresses
+func Run(args Args) {
 	if args.SkipPrivate {
 		initPrivateIPBlocks()
 	}
 	channel := make(chan string)
 	scanner := bufio.NewScanner(args.Input)
 	for scanner.Scan() {
-		go handleLine(scanner.Text(), args, channel)
+		go HandleLine(scanner.Text(), args, channel)
 		printLog(args.Output, <-channel)
 	}
 	if err := scanner.Err(); err != nil {
@@ -326,5 +317,5 @@ func main() {
 		osExit(-1)
 		return // just in case osExit was monkey-patched
 	}
-	run(args)
+	Run(args)
 }
